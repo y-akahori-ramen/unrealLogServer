@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  maintenance:
+    command: >
+     bash -c '
+        echo "Restore back up data"
+        cd /usr
+        tar xvf /backup/$${BACKUP_FILE} --strip 1
+      '

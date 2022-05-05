@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  maintenance:
+    command: >
+     bash -c '
+        echo "Back up data"
+        tar cvf /backup/backup_`date +%Y%m%d_%H_%M_%S_UTC`.tar /usr/maintenance
+      '

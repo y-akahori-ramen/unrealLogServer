@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  maintenance:
+    image: ubuntu
+    volumes:
+      - certs:/usr/maintenance/certs
+      - esdata01:/usr/maintenance/es01
+      - esdata02:/usr/maintenance/es02
+      - esdata03:/usr/maintenance/es03
+      - kibanadata:/usr/maintenance/kibanadata
+      - ./backup:/backup
+  setup:
+    depends_on:
+      maintenance:
+        condition: service_completed_successfully
+    image: ubuntu
+    command: ""
+    healthcheck:
+      test: ["CMD-SHELL", ""]
+  es01:
+    depends_on:
+      - setup
+    image: ubuntu
+    healthcheck:
+      test: ["CMD-SHELL", ""]
+  es02:
+    depends_on:
+      - es01
+    image: ubuntu
+    healthcheck:
+      test: ["CMD-SHELL", ""]
+  es03:
+    depends_on:
+      - es02
+    image: ubuntu
+    healthcheck:
+      test: ["CMD-SHELL", ""]
+  kibana:
+    depends_on:
+      - es01
+      - es02
+      - es03
+    image: ubuntu
+    healthcheck:
+      test: ["CMD-SHELL", ""]
+  fluentd:
+    depends_on:
+      - kibana
+    image: ubuntu
