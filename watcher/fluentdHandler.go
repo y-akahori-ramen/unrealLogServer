@@ -1,7 +1,6 @@
 package watcher
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/fluent/fluent-logger-golang/fluent"
@@ -33,7 +32,7 @@ func (h *FluentdHandle) Close() {
 }
 
 func (h *FluentdHandle) HandleLog(log unreallogserver.Log) error {
-	logID := fmt.Sprintf("%s_%s_%v", h.hostName, h.platform, log.FileOpenAt.UnixMilli())
+	logID := unreallogserver.LogId{Host: h.hostName, Platform: h.platform, FileOpenAtUnixMilli: log.FileOpenAt.UnixMilli()}
 	logData := map[string]interface{}{
 		"Host":                h.hostName,
 		"Platform":            h.platform,
@@ -42,7 +41,7 @@ func (h *FluentdHandle) HandleLog(log unreallogserver.Log) error {
 		"Log":                 log.Log,
 		"Category":            log.Category,
 		"Verbosity":           log.Verbosity,
-		"LogID":               logID,
+		"LogID":               logID.String(),
 	}
 
 	err := h.logger.Post(h.tag, logData)
