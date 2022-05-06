@@ -3,6 +3,7 @@ package watcher
 import (
 	"context"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,6 +13,10 @@ import (
 
 var logFileOpenPattern = regexp.MustCompile(`Log\sfile\sopen,\s+(\S+\s+\S+)`)
 var fileOpenAtTimeLayout = "01/02/06 15:04:05"
+var convertUTF8_LF = strings.NewReplacer(
+	"\r\n", "\n",
+	"\ufeff", "",
+)
 
 type Watcher struct {
 	Logs        chan unreallogserver.Log
@@ -31,6 +36,9 @@ func (w *Watcher) AddHandler(handler unreallogserver.LogHandler) {
 func (w *Watcher) handleLog(log unreallogserver.Log) error {
 	var err error
 	err = nil
+
+	//  UnrealEngineのログはUTF8WithBOMのCRLFで扱いにくいためUTF8のLFに変換する
+	log.Log = convertUTF8_LF.Replace(log.Log)
 
 	for _, handler := range w.handlerList {
 		err = handler(log)
