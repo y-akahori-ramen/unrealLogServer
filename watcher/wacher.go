@@ -6,33 +6,27 @@ import (
 	"sync"
 
 	unreallognotify "github.com/y-akahori-ramen/unrealLogNotify"
+	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 )
 
 var logFileOpenPattern = regexp.MustCompile(`Log\sfile\sopen,\s+(.+)`)
 
-type Log struct {
-	unreallognotify.LogInfo
-	FileOpenAt string
-}
-
-type LogHandler func(Log) error
-
 type Watcher struct {
-	Logs        chan Log
-	handlerList []LogHandler
+	Logs        chan unreallogserver.Log
+	handlerList []unreallogserver.LogHandler
 	fileOpenAt  string
 }
 
 func NewWatcher() *Watcher {
-	wacher := &Watcher{Logs: make(chan Log)}
+	wacher := &Watcher{Logs: make(chan unreallogserver.Log)}
 	return wacher
 }
 
-func (w *Watcher) AddHandler(handler LogHandler) {
+func (w *Watcher) AddHandler(handler unreallogserver.LogHandler) {
 	w.handlerList = append(w.handlerList, handler)
 }
 
-func (w *Watcher) handleLog(log Log) error {
+func (w *Watcher) handleLog(log unreallogserver.Log) error {
 	var err error
 	err = nil
 

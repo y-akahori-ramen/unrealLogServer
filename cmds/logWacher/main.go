@@ -16,6 +16,7 @@ import (
 
 	"github.com/fluent/fluent-logger-golang/fluent"
 	unreallognotify "github.com/y-akahori-ramen/unrealLogNotify"
+	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 	"github.com/y-akahori-ramen/unrealLogServer/watcher"
 )
 
@@ -116,7 +117,7 @@ func (t *Target) Wach(ctx context.Context) error {
 	}
 }
 
-func (t *Target) handleLog(log watcher.Log) error {
+func (t *Target) handleLog(log unreallogserver.Log) error {
 	err := t.fluentdHandler.HandleLog(log)
 	if err != nil {
 		return err
