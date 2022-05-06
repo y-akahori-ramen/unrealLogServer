@@ -34,7 +34,7 @@ func (h *FluentdHandle) Close() {
 
 func (h *FluentdHandle) HandleLog(log unreallogserver.Log) error {
 	logID := fmt.Sprintf("%s_%s_%s", h.hostName, h.platform, log.FileOpenAt)
-	logData := map[string]string{
+	logData := map[string]interface{}{
 		"Host":       h.hostName,
 		"Platform":   h.platform,
 		"FileOpenAt": log.FileOpenAt,

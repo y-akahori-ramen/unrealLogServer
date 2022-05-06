@@ -4,17 +4,19 @@ import (
 	"context"
 	"regexp"
 	"sync"
+	"time"
 
 	unreallognotify "github.com/y-akahori-ramen/unrealLogNotify"
 	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 )
 
 var logFileOpenPattern = regexp.MustCompile(`Log\sfile\sopen,\s+(\S+\s+\S+)`)
+var fileOpenAtTimeLayout = "02/01/06 15:04:05"
 
 type Watcher struct {
 	Logs        chan unreallogserver.Log
 	handlerList []unreallogserver.LogHandler
-	fileOpenAt  string
+	fileOpenAt  time.Time
 }
 
 func NewWatcher() *Watcher {
@@ -56,7 +58,13 @@ func (w *Watcher) Watch(ctx context.Context, filePath string) error {
 				noCategoryLog := log.Category == ""
 				if noCategoryLog && logFileOpenPattern.MatchString(log.Log) {
 					matches := logFileOpenPattern.FindStringSubmatch(log.Log)
-					w.fileOpenAt = matches[1]
+					timeStr := matches[1]
+					fileOpenAt, err := time.ParseInLocation(fileOpenAtTimeLayout, timeStr, time.Local)
+					if err != nil {
+						eventHandleResult <- err
+						return
+					}
+					w.fileOpenAt = fileOpenAt
 				}
 
 				logData := unreallogserver.Log{LogInfo: log, FileOpenAt: w.fileOpenAt}
