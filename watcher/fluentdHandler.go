@@ -33,16 +33,16 @@ func (h *FluentdHandle) Close() {
 }
 
 func (h *FluentdHandle) HandleLog(log unreallogserver.Log) error {
-	logID := fmt.Sprintf("%s_%s_%s", h.hostName, h.platform, log.FileOpenAt)
+	logID := fmt.Sprintf("%s_%s_%v", h.hostName, h.platform, log.FileOpenAt.UnixMilli())
 	logData := map[string]interface{}{
-		"Host":       h.hostName,
-		"Platform":   h.platform,
-		"FileOpenAt": log.FileOpenAt,
-		"Frame":      log.Frame,
-		"Log":        log.Log,
-		"Category":   log.Category,
-		"Verbosity":  log.Verbosity,
-		"LogID":      logID,
+		"Host":                h.hostName,
+		"Platform":            h.platform,
+		"FileOpenAtUnixMilli": log.FileOpenAt.UnixMilli(),
+		"Frame":               log.Frame,
+		"Log":                 log.Log,
+		"Category":            log.Category,
+		"Verbosity":           log.Verbosity,
+		"LogID":               logID,
 	}
 
 	err := h.logger.Post(h.tag, logData)
