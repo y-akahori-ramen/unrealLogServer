@@ -9,7 +9,7 @@ import (
 	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 )
 
-var logFileOpenPattern = regexp.MustCompile(`Log\sfile\sopen,\s+(.+)`)
+var logFileOpenPattern = regexp.MustCompile(`Log\sfile\sopen,\s+(\S+\s+\S+)`)
 
 type Watcher struct {
 	Logs        chan unreallogserver.Log
