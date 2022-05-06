@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/fluent/fluent-logger-golang/fluent"
+	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 )
 
 type FluentdHandle struct {
@@ -30,7 +31,7 @@ func (h *FluentdHandle) Close() {
 	h.logger.Close()
 }
 
-func (h *FluentdHandle) HandleLog(log Log) error {
+func (h *FluentdHandle) HandleLog(log unreallogserver.Log) error {
 	logData := map[string]string{
 		"Host":       h.hostName,
 		"Platform":   h.platform,

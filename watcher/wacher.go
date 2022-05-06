@@ -59,7 +59,7 @@ func (w *Watcher) Watch(ctx context.Context, filePath string) error {
 					w.fileOpenAt = matches[1]
 				}
 
-				logData := Log{LogInfo: log, FileOpenAt: w.fileOpenAt}
+				logData := unreallogserver.Log{LogInfo: log, FileOpenAt: w.fileOpenAt}
 				err := w.handleLog(logData)
 				if err != nil {
 					eventHandleResult <- err
