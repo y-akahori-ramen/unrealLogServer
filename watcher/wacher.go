@@ -11,7 +11,7 @@ import (
 )
 
 var logFileOpenPattern = regexp.MustCompile(`Log\sfile\sopen,\s+(\S+\s+\S+)`)
-var fileOpenAtTimeLayout = "02/01/06 15:04:05"
+var fileOpenAtTimeLayout = "01/02/06 15:04:05"
 
 type Watcher struct {
 	Logs        chan unreallogserver.Log
