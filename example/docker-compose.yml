@@ -234,6 +234,43 @@ services:
       - "24224:24224"
     volumes:
       - ./fluentd/log:/var/log
+  viewer:
+    image: golang:1.18.0-bullseye
+    depends_on:
+      kibana:
+        condition: service_healthy
+    volumes:
+      - ./../:/usr/unrealLogServer
+      - certs:/usr/share/certs
+    working_dir: /usr/unrealLogServer
+    command: >
+      bash -c '
+        cd ./cmds/viewer
+        rm -rf /usr/viewer/template
+        mkdir -p /usr/viewer/template
+        cp -r /usr/unrealLogServer/cmds/viewer/template /usr/viewer/
+
+        rm -rf /usr/viewer/static
+        mkdir -p /usr/viewer/static
+        cp -r /usr/unrealLogServer/cmds/viewer/static /usr/viewer/
+
+        go build -o /usr/viewer/viewer_docker
+        cd /usr/viewer/
+        echo -ne \
+          "{\n"\
+          "\"Addresses\": [\"https://es01:9200\"],\n"\
+          "\"Username\": \"elastic\",\n"\
+          "\"Password\": \"${ELASTIC_PASSWORD}\",\n"\
+          "\"CACertPath\": \"/usr/share/certs/ca/ca.crt\",\n"\
+          "\"LogIndex\": \"logs-unreallog-log\",\n"\
+          "\"Address\": \":8000\"\n"\
+          "}\n"\
+        > viewerConfig.json;
+        ./viewer_docker -conf ./viewerConfig.json
+        echo done
+      '
+    ports:
+      - "8000:8000"
 volumes:
   certs:
     driver: local

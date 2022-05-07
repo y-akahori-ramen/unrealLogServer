@@ -48,3 +48,8 @@ services:
     depends_on:
       - kibana
     image: ubuntu
+  viewer:
+    depends_on:
+      - kibana
+    image: ubuntu
+    command: ""
