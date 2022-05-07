@@ -160,21 +160,11 @@ func (q *ElasticQuerier) GetPlatforms(ctx context.Context, filter db.Filter) ([]
 }
 
 func (q *ElasticQuerier) GetCategories(ctx context.Context, id unreallogserver.LogId) ([]string, error) {
-	filter := db.Filter{}
-	filter.FileOpenAtUnixMilli = id.FileOpenAtUnixMilli
-	filter.Hosts = append(filter.Hosts, id.Host)
-	filter.Platforms = append(filter.Platforms, id.Platform)
-
-	return q.searchAllCollapseValues(ctx, "Category", filter, "Category:asc")
+	return q.searchAllCollapseValues(ctx, "Category", db.NewFilterFromLogID(id), "Category:asc")
 }
 
 func (q *ElasticQuerier) GetVerbosities(ctx context.Context, id unreallogserver.LogId) ([]string, error) {
-	filter := db.Filter{}
-	filter.FileOpenAtUnixMilli = id.FileOpenAtUnixMilli
-	filter.Hosts = append(filter.Hosts, id.Host)
-	filter.Platforms = append(filter.Platforms, id.Platform)
-
-	return q.searchAllCollapseValues(ctx, "Verbosity", filter, "Verbosity:asc")
+	return q.searchAllCollapseValues(ctx, "Verbosity", db.NewFilterFromLogID(id), "Verbosity:asc")
 }
 
 func (q *ElasticQuerier) GetIds(ctx context.Context, filter db.Filter, from int, size int) ([]unreallogserver.LogId, error) {
