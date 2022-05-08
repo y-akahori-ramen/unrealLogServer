@@ -16,17 +16,18 @@ import (
 )
 
 type Handler struct {
-	templates *template.Template
-	querier   db.Querier
+	templates    *template.Template
+	querier      db.Querier
+	timeLocation *time.Location
 }
 
-func NewHandler(querier db.Querier) (*Handler, error) {
+func NewHandler(querier db.Querier, timeLocation *time.Location) (*Handler, error) {
 	tmplates, err := template.ParseGlob("template/*.html")
 	if err != nil {
 		return nil, err
 	}
 
-	return &Handler{templates: tmplates, querier: querier}, nil
+	return &Handler{templates: tmplates, querier: querier, timeLocation: timeLocation}, nil
 }
 
 func (h *Handler) Renderer() echo.Renderer {
@@ -37,12 +38,12 @@ func (h *Handler) Render(w io.Writer, name string, data interface{}, c echo.Cont
 	return h.templates.ExecuteTemplate(w, name, data)
 }
 
-func getFileOpenAtStr(fileOpenAtUnixMilli int64) string {
-	return time.UnixMilli(fileOpenAtUnixMilli).Format("2006/01/02 15:04:05")
+func (h *Handler) getFileOpenAtStr(fileOpenAtUnixMilli int64) string {
+	return time.UnixMilli(fileOpenAtUnixMilli).In(h.timeLocation).Format("2006/01/02 15:04:05")
 }
 
-func getLogIdStr(id unreallogserver.LogId) string {
-	return fmt.Sprintf("%s_%s_%s", id.Host, id.Platform, getFileOpenAtStr(id.FileOpenAtUnixMilli))
+func (h *Handler) getLogIdStr(id unreallogserver.LogId) string {
+	return fmt.Sprintf("%s_%s_%s", id.Host, id.Platform, h.getFileOpenAtStr(id.FileOpenAtUnixMilli))
 }
 
 func getLogIdQueryParam(id unreallogserver.LogId) string {
@@ -101,8 +102,8 @@ func (h *Handler) HandleIndex(c echo.Context) error {
 	var logs []LogInfo
 	for _, id := range ids {
 		logs = append(logs, LogInfo{
-			Id:           getLogIdStr(id),
-			FileOpenAt:   getFileOpenAtStr(id.FileOpenAtUnixMilli),
+			Id:           h.getLogIdStr(id),
+			FileOpenAt:   h.getFileOpenAtStr(id.FileOpenAtUnixMilli),
 			Host:         id.Host,
 			Platform:     id.Platform,
 			ViewerLink:   fmt.Sprintf("/viewer?%s", getLogIdQueryParam(id)),
@@ -247,7 +248,7 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		CategoryFilterInfos  []FilterInfo
 	}{
 		Log:                  log,
-		LogID:                getLogIdStr(id),
+		LogID:                h.getLogIdStr(id),
 		DownloadLink:         fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
 		LogIdQuery:           getLogIdQueryParam(id),
 		VerbosityFilterInfos: verbosityFilterInfos,
@@ -269,7 +270,7 @@ func (h *Handler) HandleDownloadLog(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Query failed")
 	}
 
-	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=\"%s.log\"", getLogIdStr(id)))
+	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=\"%s.log\"", h.getLogIdStr(id)))
 
 	return c.Blob(http.StatusOK, "text/plain", []byte(logBuilder.String()))
 }

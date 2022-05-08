@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/labstack/echo/v4"
@@ -16,9 +17,10 @@ import (
 
 type Config struct {
 	elasticsearch.Config
-	CACertPath string
-	LogIndex   string
-	Address    string
+	CACertPath   string
+	LogIndex     string
+	Address      string
+	TimeLocation string
 }
 
 func (c *Config) CreateElasticConfig() (*elasticsearch.Config, error) {
@@ -61,13 +63,23 @@ func main() {
 		log.Fatal("Create elastic config error:", err)
 	}
 
+	var timeLocation *time.Location
+	if config.TimeLocation != "" {
+		timeLocation, err = time.LoadLocation("Asia/Tokyo")
+		if err != nil {
+			log.Fatal("Load time location error:", err)
+		}
+	} else {
+		timeLocation = time.Local
+	}
+
 	var querier db.Querier
 	querier, err = elasticdb.NewElasticQuerier(config.LogIndex, *elasticConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	handle, err := NewHandler(querier)
+	handle, err := NewHandler(querier, timeLocation)
 	if err != nil {
 		log.Fatal(err)
 	}

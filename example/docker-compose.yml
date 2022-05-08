@@ -263,7 +263,8 @@ services:
           "\"Password\": \"${ELASTIC_PASSWORD}\",\n"\
           "\"CACertPath\": \"/usr/share/certs/ca/ca.crt\",\n"\
           "\"LogIndex\": \"logs-unreallog-log\",\n"\
-          "\"Address\": \":8000\"\n"\
+          "\"Address\": \":8000\",\n"\
+          "\"TimeLocation\": \"Asia/Tokyo\"\n"\
           "}\n"\
         > viewerConfig.json;
         ./viewer_docker -conf ./viewerConfig.json
