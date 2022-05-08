@@ -19,16 +19,32 @@
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
-                        <form id="verbosityFilter">
+                        <form id="filter">
                         <div class="form-group">
                         <label class="form-label">VerbosityFilter</label>
                         
                         {{range .VerbosityFilterInfos}}
                         <div class="form-check">
                             {{ if .Checked }}
-                            <input class="form-check-input" type="checkbox" name="type" value="{{.Name}}" checked>
+                            <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}" checked>
                             {{ else }}
-                            <input class="form-check-input" type="checkbox" name="type" value="{{.Name}}">
+                            <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}">
+                            {{end}}
+                            <label class="form-check-label">{{.Name}}</label>
+                        </div>
+                        {{end}}
+
+                        <label class="form-label">CategoryFilter</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="allCheckCategory">
+                            <label class="form-check-label">Check All</label>
+                        </div>
+                        {{range .CategoryFilterInfos}}
+                        <div class="form-check">
+                            {{ if .Checked }}
+                            <input class="form-check-input" type="checkbox" name="category" value="{{.Name}}" checked>
+                            {{ else }}
+                            <input class="form-check-input" type="checkbox" name="category" value="{{.Name}}">
                             {{end}}
                             <label class="form-check-label">{{.Name}}</label>
                         </div>
@@ -64,6 +80,12 @@
     <script type="text/javascript">
         var editor;
         var data = "{{.Log}}";
+
+        function updateCategoryAllCheck() {
+            var allChecked = $("#filter [name=category]:checked").length == $("#filter [name=category]").length;
+            $('#allCheckCategory').prop('checked', allChecked);
+        }
+
         $(document).ready(function () {
             hsize = $(window).height();
             $("#editor").css("height", hsize * 0.8 + "px");
@@ -76,27 +98,40 @@
             editor.moveCursorTo(0, 0);
             editor.setReadOnly(true);
 
+            updateCategoryAllCheck();
+
             $('#applyFilter').click(function() {
-                var checked = $("#verbosityFilter [name=type]:checked");
                 var verbosityQueryParam = ""
-                checked.each(function() {
-                    var r = $(this).val();
+                $("#filter [name=verbosity]:checked").each(function() {
                     verbosityQueryParam += $(this).val() + ",";
                 })
-                
-                const params = {
-                    keyword: "keyword",
-                    tag: "tag"
-                }
 
-                const urlSearchParam =  new URLSearchParams(params).toString();
+                var categoryQueryParam = ""
+                $("#filter [name=category]:checked").each(function() {
+                    categoryQueryParam += $(this).val() + ",";
+                })
+
                 var requestUrl = "/viewer?{{.LogIdQuery}}"
                 if (verbosityQueryParam != "") {
                     requestUrl += "&verbosity=" + verbosityQueryParam;
                 }
-                location.href = requestUrl
+
+                if (categoryQueryParam != "") {
+                    requestUrl += "&category=" + categoryQueryParam;
+                }
+
+                location.href = requestUrl;
                 // $(window).location.
                 // window.location.href = "/"
+            });
+
+            $('#allCheckCategory').click(function() {
+                console.log("allCheckCategory");
+                $("#filter [name=category]").prop('checked', this.checked);
+            });
+
+            $("#filter [name=category]").click(function() {
+                updateCategoryAllCheck();
             });
         });
         $(window).resize(function () {

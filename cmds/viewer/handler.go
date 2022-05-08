@@ -166,6 +166,8 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	queryFilter := db.NewFilterFromLogID(id)
+
 	var verbosityFilter db.Verbosity
 	if verbosityFilterStr := c.QueryParam("verbosity"); verbosityFilterStr != "" {
 		for _, verbosityType := range strings.Split(verbosityFilterStr, ",") {
@@ -186,12 +188,48 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		}
 		verbosityFilterInfos = append(verbosityFilterInfos, info)
 	}
+	queryFilter.Verbosity = verbosityFilter
 
-	filter := db.NewFilterFromLogID(id)
-	filter.Verbosity = verbosityFilter
+	categoryFilterInfos := []FilterInfo{}
+	categories, err := h.querier.GetCategories(c.Request().Context(), id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	var checkedCategories []string
+	if categirtFilterStr := c.QueryParam("category"); categirtFilterStr != "" {
+		checkedCategories = strings.Split(categirtFilterStr, ",")
+	}
+
+	hasCategoryFilter := len(checkedCategories) > 0
+	for _, category := range categories {
+		categoryForHTML := category
+
+		// カテゴリなしはDBには空文字で登録されているがHTML上で分かりにくいため(none)という文字列で表示する
+		if category == "" {
+			categoryForHTML = "(none)"
+		}
+
+		checked := false
+		if hasCategoryFilter {
+			for idx := range checkedCategories {
+				if checkedCategories[idx] == categoryForHTML {
+					checked = true
+					break
+				}
+			}
+			if checked {
+				queryFilter.Categories = append(queryFilter.Categories, category)
+			}
+		} else {
+			checked = true
+		}
+
+		categoryFilterInfos = append(categoryFilterInfos, FilterInfo{Name: categoryForHTML, Checked: checked})
+	}
 
 	logBuilder := LogBuilder{}
-	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, filter)
+	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, queryFilter)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Query failed")
 	}
@@ -206,12 +244,14 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		DownloadLink         string
 		LogIdQuery           string
 		VerbosityFilterInfos []FilterInfo
+		CategoryFilterInfos  []FilterInfo
 	}{
 		Log:                  log,
 		LogID:                getLogIdStr(id),
 		DownloadLink:         fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
 		LogIdQuery:           getLogIdQueryParam(id),
 		VerbosityFilterInfos: verbosityFilterInfos,
+		CategoryFilterInfos:  categoryFilterInfos,
 	}
 
 	return c.Render(http.StatusOK, "viewer.html", data)
