@@ -33,6 +33,7 @@
                     <table class="table table-striped table-sm">
                         <thead>
                             <tr>
+                                <th scope="col">Action</th>
                                 <th scope="col">Id</th>
                                 <th scope="col">FileOpenAt</th>
                                 <th scope="col">Host</th>
@@ -42,7 +43,8 @@
                         <tbody>
                             {{range .Logs}}
                             <tr>
-                                <td><a href="{{.ViewerLink}}">{{.Id}}</a></td>
+                                <td><a href="{{.ViewerLink}}">Open</a> <a href="{{.DownloadLink}}">Download</a></td>
+                                <td>{{.Id}}</td>
                                 <td>{{.FileOpenAt}}</td>
                                 <td>{{.Host}}</td>
                                 <td>{{.Platform}}</td>

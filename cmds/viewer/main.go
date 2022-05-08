@@ -79,6 +79,7 @@ func main() {
 
 	e.GET("/", handle.HandleIndex)
 	e.GET("/viewer", handle.HandleViewer)
+	e.GET("/download", handle.HandleDownloadLog)
 
 	e.Logger.Fatal(e.Start(config.Address))
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -43,6 +44,30 @@ func getLogIdStr(id unreallogserver.LogId) string {
 	return fmt.Sprintf("%s_%s_%s", id.Host, id.Platform, getFileOpenAtStr(id.FileOpenAtUnixMilli))
 }
 
+func getLogIdQueryParam(id unreallogserver.LogId) string {
+	return fmt.Sprintf("host=%s&platform=%s&fileOpenAt=%d", id.Host, id.Platform, id.FileOpenAtUnixMilli)
+}
+
+func getLogIdFromQuery(c echo.Context) (unreallogserver.LogId, error) {
+	host := c.QueryParam("host")
+	platform := c.QueryParam("platform")
+	fileOpenAtStr := c.QueryParam("fileOpenAt")
+	if host == "" || platform == "" || fileOpenAtStr == "" {
+		return unreallogserver.LogId{}, errors.New("Invalid QueryParam")
+	}
+
+	var fileOpenAt int64
+	if fileOpenAtStr != "" {
+		var err error
+		fileOpenAt, err = strconv.ParseInt(fileOpenAtStr, 10, 64)
+		if err != nil {
+			return unreallogserver.LogId{}, errors.New("Parse fileOpenAt failed")
+		}
+	}
+	id := unreallogserver.LogId{Host: host, Platform: platform, FileOpenAtUnixMilli: fileOpenAt}
+	return id, nil
+}
+
 func (h *Handler) HandleIndex(c echo.Context) error {
 	const pageStep = 50
 	pageStr := c.QueryParam("page")
@@ -59,11 +84,12 @@ func (h *Handler) HandleIndex(c echo.Context) error {
 	}
 
 	type LogInfo struct {
-		Id         string
-		FileOpenAt string
-		Host       string
-		Platform   string
-		ViewerLink string
+		Id           string
+		FileOpenAt   string
+		Host         string
+		Platform     string
+		ViewerLink   string
+		DownloadLink string
 	}
 
 	ids, err := h.querier.GetIds(c.Request().Context(), db.NewFilter(), curPage*pageStep, pageStep)
@@ -74,11 +100,12 @@ func (h *Handler) HandleIndex(c echo.Context) error {
 	var logs []LogInfo
 	for _, id := range ids {
 		logs = append(logs, LogInfo{
-			Id:         getLogIdStr(id),
-			FileOpenAt: getFileOpenAtStr(id.FileOpenAtUnixMilli),
-			Host:       id.Host,
-			Platform:   id.Platform,
-			ViewerLink: fmt.Sprintf("/viewer?host=%s&platform=%s&fileOpenAt=%d", id.Host, id.Platform, id.FileOpenAtUnixMilli),
+			Id:           getLogIdStr(id),
+			FileOpenAt:   getFileOpenAtStr(id.FileOpenAtUnixMilli),
+			Host:         id.Host,
+			Platform:     id.Platform,
+			ViewerLink:   fmt.Sprintf("/viewer?%s", getLogIdQueryParam(id)),
+			DownloadLink: fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
 		})
 	}
 
@@ -103,25 +130,13 @@ func (h *Handler) HandleIndex(c echo.Context) error {
 }
 
 func (h *Handler) HandleViewer(c echo.Context) error {
-	host := c.QueryParam("host")
-	platform := c.QueryParam("platform")
-	fileOpenAtStr := c.QueryParam("fileOpenAt")
-	if host == "" || platform == "" || fileOpenAtStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest)
+	id, err := getLogIdFromQuery(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-
-	var fileOpenAt int64
-	if fileOpenAtStr != "" {
-		var err error
-		fileOpenAt, err = strconv.ParseInt(fileOpenAtStr, 10, 64)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Parse fileOpenAt failed")
-		}
-	}
-	id := unreallogserver.LogId{Host: host, Platform: platform, FileOpenAtUnixMilli: fileOpenAt}
 
 	logBuilder := LogBuilder{}
-	err := h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, db.NewFilterFromLogID(id))
+	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, db.NewFilterFromLogID(id))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Query failed")
 	}
@@ -131,12 +146,31 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 	}
 
 	data := struct {
-		Log   string
-		LogID string
+		Log          string
+		LogID        string
+		DownloadLink string
 	}{
-		Log:   log,
-		LogID: getLogIdStr(id),
+		Log:          log,
+		LogID:        getLogIdStr(id),
+		DownloadLink: fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
 	}
 
 	return c.Render(http.StatusOK, "viewer.html", data)
+}
+
+func (h *Handler) HandleDownloadLog(c echo.Context) error {
+	id, err := getLogIdFromQuery(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	logBuilder := LogBuilder{}
+	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, db.NewFilterFromLogID(id))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Query failed")
+	}
+
+	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=\"%s.log\"", getLogIdStr(id)))
+
+	return c.Blob(http.StatusOK, "text/plain", []byte(logBuilder.String()))
 }
