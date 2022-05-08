@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -129,14 +130,68 @@ func (h *Handler) HandleIndex(c echo.Context) error {
 	return c.Render(http.StatusOK, "index.html", data)
 }
 
+var toVerbosityFlag = map[string]db.Verbosity{
+	"Log":          db.Log,
+	"Warning":      db.Warning,
+	"Error":        db.Error,
+	"Display":      db.Display,
+	"Verbose":      db.Verbose,
+	"VeryVerbosse": db.VeryVerbose,
+}
+var toVerbosityName = map[db.Verbosity]string{
+	db.Log:         "Log",
+	db.Warning:     "Warning",
+	db.Error:       "Error",
+	db.Display:     "Display",
+	db.Verbose:     "Verbose",
+	db.VeryVerbose: "VeryVerbosse",
+}
+
+type FilterInfo struct {
+	Name    string
+	Checked bool
+}
+
+func NewFilterInfo(verbosityType db.Verbosity, selected bool) (FilterInfo, error) {
+	if name, ok := toVerbosityName[verbosityType]; ok {
+		return FilterInfo{Name: name, Checked: selected}, nil
+	} else {
+		return FilterInfo{}, errors.New("Unknown verbosity type")
+	}
+}
+
 func (h *Handler) HandleViewer(c echo.Context) error {
 	id, err := getLogIdFromQuery(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	var verbosityFilter db.Verbosity
+	if verbosityFilterStr := c.QueryParam("verbosity"); verbosityFilterStr != "" {
+		for _, verbosityType := range strings.Split(verbosityFilterStr, ",") {
+			if verbosityFlag, ok := toVerbosityFlag[verbosityType]; ok {
+				verbosityFilter |= verbosityFlag
+			}
+		}
+	} else {
+		verbosityFilter = db.Log | db.Warning | db.Error | db.Display | db.Verbose | db.VeryVerbose
+	}
+
+	verbosityFilterInfos := []FilterInfo{}
+	for i := 0; i < db.VerbosityNum; i++ {
+		flag := db.Verbosity(1 << i)
+		info, err := NewFilterInfo(flag, verbosityFilter&flag != 0)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+		verbosityFilterInfos = append(verbosityFilterInfos, info)
+	}
+
+	filter := db.NewFilterFromLogID(id)
+	filter.Verbosity = verbosityFilter
+
 	logBuilder := LogBuilder{}
-	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, db.NewFilterFromLogID(id))
+	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, filter)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Query failed")
 	}
@@ -146,13 +201,17 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 	}
 
 	data := struct {
-		Log          string
-		LogID        string
-		DownloadLink string
+		Log                  string
+		LogID                string
+		DownloadLink         string
+		LogIdQuery           string
+		VerbosityFilterInfos []FilterInfo
 	}{
-		Log:          log,
-		LogID:        getLogIdStr(id),
-		DownloadLink: fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
+		Log:                  log,
+		LogID:                getLogIdStr(id),
+		DownloadLink:         fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
+		LogIdQuery:           getLogIdQueryParam(id),
+		VerbosityFilterInfos: verbosityFilterInfos,
 	}
 
 	return c.Render(http.StatusOK, "viewer.html", data)
