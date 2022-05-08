@@ -87,30 +87,37 @@ func (q *ElasticQuerier) searchAllCollapseValues(ctx context.Context, collapseFi
 	return values, nil
 }
 
-func (q *ElasticQuerier) getLog(ctx context.Context, logHandler unreallogserver.LogHandler, filter db.Filter, from, size int) (int, error) {
+// getLog ログを時刻の昇順で取得しlogHandlerに渡す
+func (q *ElasticQuerier) getLog(ctx context.Context, logHandler unreallogserver.LogHandler, filter db.Filter, searchAfter, size int) (int, int, error) {
+	// Elasticsearchではfromとsizeによる指定は10000を超える場合にエラーとなり、大量のドキュメントを取得する場合にはsearchAfterを使用することが推奨されている
+	// https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
+	// ログの行数が10000を超えることは十分にありえるためsearchafterによるデータ取得を行う
 	query := map[string]interface{}{
-		"query": CreateQuery(filter),
+		"query":        CreateQuery(filter),
+		"search_after": []interface{}{searchAfter},
 	}
+
 	res, err := q.client.Search(
 		q.client.Search.WithContext(ctx),
 		q.client.Search.WithIndex(q.index),
 		q.client.Search.WithBody(esutil.NewJSONReader(&query)),
 		q.client.Search.WithSource("true"),
-		q.client.Search.WithFrom(from),
 		q.client.Search.WithSize(size),
 		q.client.Search.WithSort("@timestamp:asc"),
 	)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	defer res.Body.Close()
 
 	var r map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return 0, fmt.Errorf("[Error]Error parsing the response body: %s", err)
+		return 0, 0, fmt.Errorf("[Error]Error parsing the response body: %s", err)
 	}
 
-	logCount := 0
+	var nextSearchAfter int
+	var logCount int
+
 	for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
 		source := hit.(map[string]interface{})["_source"].(map[string]interface{})
 		fileOpenAtUnixMilli := (int64)(source["FileOpenAtUnixMilli"].(float64))
@@ -118,6 +125,7 @@ func (q *ElasticQuerier) getLog(ctx context.Context, logHandler unreallogserver.
 		verbosity := source["Verbosity"].(string)
 		log := source["Log"].(string)
 		frame := source["Frame"].(string)
+		nextSearchAfter = (int)(hit.(map[string]interface{})["sort"].([]interface{})[0].(float64))
 
 		logInfo := unreallognotify.LogInfo{
 			Category:  category,
@@ -128,24 +136,26 @@ func (q *ElasticQuerier) getLog(ctx context.Context, logHandler unreallogserver.
 
 		err = logHandler(unreallogserver.Log{LogInfo: logInfo, FileOpenAt: time.UnixMilli(fileOpenAtUnixMilli)})
 		if err != nil {
-			return logCount, err
+			return logCount, 0, err
 		}
 		logCount++
 	}
 
-	return logCount, nil
+	return logCount, nextSearchAfter, nil
 }
 
 func (q *ElasticQuerier) GetLog(ctx context.Context, logHandler unreallogserver.LogHandler, filter db.Filter) error {
 	const step = 1000
-	for from := 0; ; from += step {
-		logCount, err := q.getLog(ctx, logHandler, filter, from, step)
+	searchAfter := 0
+	for {
+		logCount, nextSearchAfter, err := q.getLog(ctx, logHandler, filter, searchAfter, step)
 		if err != nil {
 			return err
 		}
 		if logCount < step {
 			break
 		}
+		searchAfter = nextSearchAfter
 	}
 
 	return nil
