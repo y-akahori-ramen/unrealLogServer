@@ -22,7 +22,10 @@
                         <form id="filter">
                         <div class="form-group">
                         <label class="form-label">VerbosityFilter</label>
-                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="allCheckVerbosity">
+                            <label class="form-check-label">Check All</label>
+                        </div>                        
                         {{range .VerbosityFilterInfos}}
                         <div class="form-check">
                             {{ if .Checked }}
@@ -86,6 +89,11 @@
             $('#allCheckCategory').prop('checked', allChecked);
         }
 
+        function updateVerbosityAllCheck() {
+            var allChecked = $("#filter [name=verbosity]:checked").length == $("#filter [name=verbosity]").length;
+            $('#allCheckVerbosity').prop('checked', allChecked);
+        }
+
         $(document).ready(function () {
             hsize = $(window).height();
             $("#editor").css("height", hsize * 0.8 + "px");
@@ -99,6 +107,7 @@
             editor.setReadOnly(true);
 
             updateCategoryAllCheck();
+            updateVerbosityAllCheck();
 
             $('#applyFilter').click(function() {
                 var verbosityQueryParam = ""
@@ -126,12 +135,19 @@
             });
 
             $('#allCheckCategory').click(function() {
-                console.log("allCheckCategory");
                 $("#filter [name=category]").prop('checked', this.checked);
+            });
+
+            $('#allCheckVerbosity').click(function() {
+                $("#filter [name=verbosity]").prop('checked', this.checked);
             });
 
             $("#filter [name=category]").click(function() {
                 updateCategoryAllCheck();
+            });
+
+            $("#filter [name=verbosity]").click(function() {
+                updateVerbosityAllCheck();
             });
         });
         $(window).resize(function () {
