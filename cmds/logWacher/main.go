@@ -28,7 +28,8 @@ type TargetConfig struct {
 
 type Config struct {
 	fluent.Config
-	Targets []TargetConfig `json:"targets"`
+	Targets               []TargetConfig `json:"targets"`
+	WatchIntervalMilliSec int            `json:"watchintervalMilliSec"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -99,7 +100,7 @@ func (t *Target) checkFileExist(ctx context.Context) error {
 	}
 }
 
-func (t *Target) Wach(ctx context.Context) error {
+func (t *Target) Wach(ctx context.Context, watchInterval time.Duration) error {
 	log.Printf("Start waching. Tag:%s Platform:%s Path:%s", t.config.Tag, t.config.Platform, t.config.Platform)
 
 	for {
@@ -108,7 +109,7 @@ func (t *Target) Wach(ctx context.Context) error {
 			return err
 		}
 
-		watcher := watcher.NewWatcher()
+		watcher := watcher.NewWatcher(watchInterval)
 		watcher.AddHandler(t.handleLog)
 		err = watcher.Watch(ctx, t.config.Path)
 		if err != unreallognotify.ErrFileRemoved {
@@ -162,7 +163,7 @@ func main() {
 			}
 			defer target.Close()
 
-			results[idx] = target.Wach(ctx)
+			results[idx] = target.Wach(ctx, time.Millisecond*time.Duration(config.WatchIntervalMilliSec))
 		}(targetIdx, target)
 	}
 

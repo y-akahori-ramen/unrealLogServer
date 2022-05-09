@@ -19,13 +19,14 @@ var convertUTF8_LF = strings.NewReplacer(
 )
 
 type Watcher struct {
-	Logs        chan unreallogserver.Log
-	handlerList []unreallogserver.LogHandler
-	fileOpenAt  time.Time
+	Logs          chan unreallogserver.Log
+	handlerList   []unreallogserver.LogHandler
+	fileOpenAt    time.Time
+	watchInterval time.Duration
 }
 
-func NewWatcher() *Watcher {
-	wacher := &Watcher{Logs: make(chan unreallogserver.Log)}
+func NewWatcher(watchInterval time.Duration) *Watcher {
+	wacher := &Watcher{Logs: make(chan unreallogserver.Log), watchInterval: watchInterval}
 	return wacher
 }
 
@@ -55,7 +56,7 @@ func (w *Watcher) Watch(ctx context.Context, filePath string) error {
 	var wg sync.WaitGroup
 	watchEnd := make(chan struct{})
 
-	watcher := unreallognotify.NewWatcher()
+	watcher := unreallognotify.NewWatcher(w.watchInterval)
 
 	wg.Add(1)
 	go func() {
