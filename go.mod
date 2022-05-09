@@ -6,7 +6,7 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.2.0
 	github.com/fluent/fluent-logger-golang v1.9.0
 	github.com/labstack/echo/v4 v4.7.2
-	github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509044545-7a40250dbf06
+	github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509144505-bf5e33985c73
 )
 
 require (

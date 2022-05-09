@@ -44,6 +44,8 @@ github.com/valyala/fasttemplate v1.2.1 h1:TVEnxayobAdVkhQfrfes2IzOB6o+z4roRkPF52
 github.com/valyala/fasttemplate v1.2.1/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
 github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509044545-7a40250dbf06 h1:veliw5D708D7IGjEwZmPZk5GtZu11jfncuwHkbziuQ8=
 github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509044545-7a40250dbf06/go.mod h1:+x6Lr1sm45KlNxK0zB5Zwr5nWwPWjzrdAtgrvqwYZWA=
+github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509144505-bf5e33985c73 h1:UCs+QoqPKVOgkGlZn5WSPzbEt5Hk9zQIxyZ73eTd9ko=
+github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509144505-bf5e33985c73/go.mod h1:+x6Lr1sm45KlNxK0zB5Zwr5nWwPWjzrdAtgrvqwYZWA=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
