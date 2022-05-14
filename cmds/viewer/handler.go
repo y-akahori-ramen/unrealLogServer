@@ -153,12 +153,16 @@ type FilterInfo struct {
 	Checked bool
 }
 
-func NewFilterInfo(verbosityType db.Verbosity, selected bool) (FilterInfo, error) {
+func NewVerbosityFilterInfo(verbosityType db.Verbosity, selected bool) (FilterInfo, error) {
 	if name, ok := toVerbosityName[verbosityType]; ok {
 		return FilterInfo{Name: name, Checked: selected}, nil
 	} else {
 		return FilterInfo{}, errors.New("Unknown verbosity type")
 	}
+}
+
+func NewCategoryFilterInfo(name string, checked bool) FilterInfo {
+	return FilterInfo{Name: name, Checked: checked}
 }
 
 func (h *Handler) HandleViewer(c echo.Context) error {
@@ -183,7 +187,7 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 	verbosityFilterInfos := []FilterInfo{}
 	for i := 0; i < db.VerbosityNum; i++ {
 		flag := db.Verbosity(1 << i)
-		info, err := NewFilterInfo(flag, verbosityFilter&flag != 0)
+		info, err := NewVerbosityFilterInfo(flag, verbosityFilter&flag != 0)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
@@ -226,7 +230,7 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 			checked = true
 		}
 
-		categoryFilterInfos = append(categoryFilterInfos, FilterInfo{Name: categoryForHTML, Checked: checked})
+		categoryFilterInfos = append(categoryFilterInfos, NewCategoryFilterInfo(categoryForHTML, checked))
 	}
 
 	logBuilder := LogBuilder{}
@@ -246,6 +250,7 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		LogIdQuery           string
 		VerbosityFilterInfos []FilterInfo
 		CategoryFilterInfos  []FilterInfo
+		CategoryJsonData     []*CategoryData
 	}{
 		Log:                  log,
 		LogID:                h.getLogIdStr(id),
@@ -253,6 +258,7 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		LogIdQuery:           getLogIdQueryParam(id),
 		VerbosityFilterInfos: verbosityFilterInfos,
 		CategoryFilterInfos:  categoryFilterInfos,
+		CategoryJsonData:     []*CategoryData{NewCaregoryDataBuilder().CreateCategoryData(categoryFilterInfos)},
 	}
 
 	return c.Render(http.StatusOK, "viewer.html", data)

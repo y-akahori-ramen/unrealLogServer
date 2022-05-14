@@ -6,6 +6,28 @@
     <title>LogViewer-{{.LogID}}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style type="text/css">
+        .tree-parent {
+            cursor: pointer;
+            user-select: none;
+        }
+        .tree-parent::before {
+            content: "\25B6";
+            color: black;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .tree-parent-open::before {
+            transform: rotate(90deg);
+        }
+        .tree-ul {
+            list-style: none;
+            padding-inline-start: 1em;
+        }
+        .tree-top {
+            margin-left: -1em;
+        }
+    </style>
 </head>
 
 <body>
@@ -20,42 +42,30 @@
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <form id="filter">
-                        <div class="form-group">
-                        <label class="form-label">VerbosityFilter</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="allCheckVerbosity">
-                            <label class="form-check-label">Check All</label>
-                        </div>                        
-                        {{range .VerbosityFilterInfos}}
-                        <div class="form-check">
-                            {{ if .Checked }}
-                            <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}" checked>
-                            {{ else }}
-                            <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}">
-                            {{end}}
-                            <label class="form-check-label">{{.Name}}</label>
-                        </div>
-                        {{end}}
+                            <div class="form-group">
+                                <label class="form-label">VerbosityFilter</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="allCheckVerbosity">
+                                    <label class="form-check-label">Check All</label>
+                                </div>
+                                {{range .VerbosityFilterInfos}}
+                                <div class="form-check">
+                                    {{ if .Checked }}
+                                    <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}"
+                                        checked>
+                                    {{ else }}
+                                    <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}">
+                                    {{end}}
+                                    <label class="form-check-label">{{.Name}}</label>
+                                </div>
+                                {{end}}
 
-                        <label class="form-label">CategoryFilter</label>
-                        <input type="search" class="form-control" autocomplete="off" placeholder="Type to filter..." id="categoryFilterInput">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="allCheckCategory">
-                            <label class="form-check-label">Check All</label>
-                        </div>
-                        {{range .CategoryFilterInfos}}
-                        <div class="form-check" name="category">
-                            {{ if .Checked }}
-                            <input class="form-check-input" type="checkbox" name="categoryCheckBox" value="{{.Name}}" checked>
-                            {{ else }}
-                            <input class="form-check-input" type="checkbox" name="categoryCheckBox" value="{{.Name}}">
-                            {{end}}
-                            <label class="form-check-label">{{.Name}}</label>
-                        </div>
-                        {{end}}
-
-                        </div>
-                        <button type="button" class="btn btn-primary" id="applyFilter">Apply</button>
+                                <label class="form-label">CategoryFilter</label>
+                                <input type="search" class="form-control" autocomplete="off"
+                                    placeholder="Type to filter..." id="categoryFilterInput">
+                                <div id="category"></div>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="applyFilter">Apply</button>
                         </form>
                     </ul>
                 </div>
@@ -85,9 +95,90 @@
         var editor;
         var data = "{{.Log}}";
 
-        function updateCategoryAllCheck() {
-            var allChecked = $("#filter [name=categoryCheckBox]:checked").length == $("#filter [name=categoryCheckBox]").length;
-            $('#allCheckCategory').prop('checked', allChecked);
+        const categoryOriginalData = {{.CategoryJsonData}};
+
+        function applyCategoryFormStatus(categoryElem, filter, checkedCategoryNames, openParentNames) {
+            filter = filter.toLowerCase();
+            if (categoryElem['Children'].length > 0) {
+                let visibleChildCount = 0
+                categoryElem['Children'].forEach(function(child) {
+                    applyCategoryFormStatus(child, filter, checkedCategoryNames, openParentNames);
+                    if (child['Visibility']) {
+                        visibleChildCount++;
+                    }
+                });
+                categoryElem['Visibility'] = visibleChildCount > 0;
+                categoryElem['Open'] = openParentNames.includes(categoryElem['Name']) | visibleChildCount > 0;
+                categoryElem['Checked'] = checkedCategoryNames.includes(categoryElem['Name']);
+            } else {
+                categoryElem['Visibility'] = categoryElem['Name'].toLowerCase().includes(filter);
+                categoryElem['Checked'] = checkedCategoryNames.includes(categoryElem['Name']);
+            }
+        }
+
+        function createCategoryElemDOMStr(categoryElem) {
+            let root = `<li class="${categoryElem['Visibility'] ? '' : 'd-none'}">`;
+            if (categoryElem['Children'].length > 0) {
+                root += `<div class="form-group">
+                 <input class="form-check-input" type="checkbox" name="parentCategoryCheckBox" value="${categoryElem['Name']}" ${categoryElem['Checked'] ? 'checked' : ''}>
+                 <label class="form-check-label tree-parent ${categoryElem['Open'] ? 'tree-parent-open' : ''}" name="tree-parent">${categoryElem['Name']}</label>
+                 </div>`;
+
+                root += `<ul class="tree-ul ${categoryElem['Open'] ? '' : 'd-none'}">`;
+                categoryElem['Children'].forEach(function(child) {
+                    root += createCategoryElemDOMStr(child);
+                });
+                root += '</ul>';
+            } else {
+                root += `<div class="form-check" name="category">
+                    <input class="form-check-input" type="checkbox" name="categoryCheckBox" value="${categoryElem['Name']}" ${categoryElem['Checked'] ? 'checked' : ''}>
+                    <label class="form-check-label">${categoryElem['Name']}</label>
+                </div>`;
+            }
+            root += '</li>';
+
+            return root;
+        }
+
+        function updateCategory(categoryData) {
+            $("#filter [name=categoryCheckBox]").off('click');
+            $('#filter [name=tree-parent]').off('click');
+            $('#filter [name=parentCategoryCheckBox]').off('click');
+
+            $('#category').empty();
+
+            let categoryListRoot = $('<ul class="tree-ul tree-top">');
+            categoryData.forEach(function(categoryElem) {
+                categoryListRoot.append(createCategoryElemDOMStr(categoryElem));
+            });
+            categoryListRoot.append('</ul>');
+            
+            $('#category').append(categoryListRoot);
+
+            $("#filter [name=categoryCheckBox]").click(function () {
+                updateParentCategoryAllCheck();
+            });
+
+            $('#filter [name=tree-parent]').click(function() {
+                $(this).toggleClass('tree-parent-open');
+                $(this).parent().parent().children('ul').each(function(index, elem) {
+                    $(elem).toggleClass('d-none')
+                });
+            });
+
+            $('#filter [name=parentCategoryCheckBox]').click(function() {
+                let childrenRoot = $(this).parent().parent().children('ul');
+                childrenRoot.find('[name=categoryCheckBox]').prop('checked', this.checked);
+                childrenRoot.find('[name=parentCategoryCheckBox]').prop('checked', this.checked);
+            });
+        }
+
+        function updateParentCategoryAllCheck() {
+            $('#filter [name=parentCategoryCheckBox]').each(function() {
+                let childrenRoot = $(this).parent().parent().children('ul');
+                let allChecked = childrenRoot.find('[name=categoryCheckBox]:checked').length == childrenRoot.find('[name=categoryCheckBox]').length;
+                $(this).prop('checked', allChecked);
+            });
         }
 
         function updateVerbosityAllCheck() {
@@ -107,17 +198,18 @@
             editor.moveCursorTo(0, 0);
             editor.setReadOnly(true);
 
-            updateCategoryAllCheck();
+            updateCategory(categoryOriginalData);
             updateVerbosityAllCheck();
+            updateParentCategoryAllCheck();            
 
-            $('#applyFilter').click(function() {
+            $('#applyFilter').click(function () {
                 var verbosityQueryParam = ""
-                $("#filter [name=verbosity]:checked").each(function() {
+                $("#filter [name=verbosity]:checked").each(function () {
                     verbosityQueryParam += $(this).val() + ",";
                 })
 
                 var categoryQueryParam = ""
-                $("#filter [name=categoryCheckBox]:checked").each(function() {
+                $("#filter [name=categoryCheckBox]:checked").each(function () {
                     categoryQueryParam += $(this).val() + ",";
                 })
 
@@ -133,35 +225,40 @@
                 location.href = requestUrl;
             });
 
-            $('#allCheckCategory').click(function() {
-                $("#filter [name=categoryCheckBox]").prop('checked', this.checked);
-            });
-
-            $('#allCheckVerbosity').click(function() {
+            $('#allCheckVerbosity').click(function () {
                 $("#filter [name=verbosity]").prop('checked', this.checked);
             });
 
-            $("#filter [name=categoryCheckBox]").click(function() {
-                updateCategoryAllCheck();
-            });
-
-            $("#filter [name=verbosity]").click(function() {
+            $("#filter [name=verbosity]").click(function () {
                 updateVerbosityAllCheck();
-            });
+            });            
 
-            $('#categoryFilterInput').on('input', function() {
-                const filter =  $('#categoryFilterInput').val().toUpperCase();
-                console.log('input value:', filter, 'length:', filter.length);
-                $("#filter [name=category]").each(function(index, elem) {
-                    const categoryName = $(elem).children('[name=categoryCheckBox]').val().toUpperCase()
-                    const visible = categoryName.indexOf(filter) > -1;
-                    if (visible) {
-                        elem.setAttribute('class', 'form-check');
-                    } else {
-                        elem.setAttribute('class', 'form-check d-none');
+            $('#categoryFilterInput').on('input', function () {
+                const filter = $('#categoryFilterInput').val();
+
+                let checkedCategoryNames = []
+                $("#filter [name=categoryCheckBox]:checked").each(function () {
+                    checkedCategoryNames.push($(this).val());
+                })
+                $("#filter [name=parentCategoryCheckBox]:checked").each(function () {
+                    checkedCategoryNames.push($(this).val());
+                })
+
+                let openParentNames = [];
+                $('#filter [name=tree-parent]').each(function () {
+                    if ($(this).hasClass('tree-parent-open')) {
+                        openParentNames.push($(this).text());
                     }
                 });
+
+                let filterdCategoryData = JSON.parse(JSON.stringify(categoryOriginalData));
+                filterdCategoryData.forEach(function (categoryElem) {
+                    applyCategoryFormStatus(categoryElem, filter, checkedCategoryNames, openParentNames);
+                });
+                updateCategory(filterdCategoryData);
             });
+
+
         });
         $(window).resize(function () {
             hsize = $(window).height();
