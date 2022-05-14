@@ -170,6 +170,7 @@
                 let childrenRoot = $(this).parent().parent().children('ul');
                 childrenRoot.find('[name=categoryCheckBox]').prop('checked', this.checked);
                 childrenRoot.find('[name=parentCategoryCheckBox]').prop('checked', this.checked);
+                updateParentCategoryAllCheck();
             });
         }
 
