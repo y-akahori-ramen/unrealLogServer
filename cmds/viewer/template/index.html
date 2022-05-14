@@ -56,26 +56,26 @@
 
                 <nav>
                     <ul class="pagination justify-content-end">
-                    {{ if ge .PrevPage 0 }}
+                        {{ if ge .PrevPage 0 }}
                         <li class="page-item">
-                    {{else}} 
+                            {{else}}
                         <li class="page-item disabled">
-                    {{end}}
-                        <a class="page-link" href="/?page={{.PrevPage}}">
-                          <span class="sr-only">Prev</span>
-                        </a>
-                      </li>
-                      {{ if ge .NextPage 0 }}
-                      <li class="page-item">
-                      {{else}} 
-                      <li class="page-item disabled">
-                      {{end}}
-                      <a class="page-link" href="/?page={{.NextPage}}">
-                          <span class="sr-only">Next</span>
-                        </a>
-                      </li>
+                            {{end}}
+                            <a class="page-link" href="/?page={{.PrevPage}}">
+                                <span class="sr-only">Prev</span>
+                            </a>
+                        </li>
+                        {{ if ge .NextPage 0 }}
+                        <li class="page-item">
+                            {{else}}
+                        <li class="page-item disabled">
+                            {{end}}
+                            <a class="page-link" href="/?page={{.NextPage}}">
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
                     </ul>
-                  </nav>
+                </nav>
             </main>
         </div>
     </div>

@@ -11,19 +11,23 @@
             cursor: pointer;
             user-select: none;
         }
+
         .tree-parent::before {
             content: "\25B6";
             color: black;
             display: inline-block;
             margin-right: 6px;
         }
+
         .tree-parent-open::before {
             transform: rotate(90deg);
         }
+
         .tree-ul {
             list-style: none;
             padding-inline-start: 1em;
         }
+
         .tree-top {
             margin-left: -1em;
         }
@@ -79,7 +83,8 @@
                 <div>
                     <form id="filter">
                         <div class="form-group">
-                            <input type="search" class="form-control" autocomplete="off" placeholder="Type to Text filter..." id="textFilterInput">
+                            <input type="search" class="form-control" autocomplete="off"
+                                placeholder="Type to Text filter..." id="textFilterInput">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="ignoreTextFilterCase" checked>
                                 <label class="form-check-label">Ignore text filter case</label>
@@ -105,11 +110,10 @@
         let editor;
         let applyTextFilterTimer;
 
-        const categoryOriginalData = {{.CategoryJsonData}};
-        const logData = {{.LogData}};
+        const categoryOriginalData = {{.CategoryJsonData }};
+        const logData = {{.LogData }};
 
-        function updateLogText() {            
-            console.log('updateLogText');
+        function updateLogText() {
             let checkedeVerbosityNameSet = new Set()
             $("#filter [name=verbosity]:checked").each(function () {
                 checkedeVerbosityNameSet.add($(this).val());
@@ -120,7 +124,7 @@
                 chackedCategoryNameSet.add($(this).val());
             })
 
-            const ignoreTextFilterCase = $('#ignoreTextFilterCase').is(':checked');            
+            const ignoreTextFilterCase = $('#ignoreTextFilterCase').is(':checked');
             const textFilter = ignoreTextFilterCase ? $('#textFilterInput').val().toLowerCase() : $('#textFilterInput').val();
             const hasTextFilter = textFilter.length > 0;
 
@@ -151,7 +155,7 @@
             filter = filter.toLowerCase();
             if (categoryElem['Children'].length > 0) {
                 let visibleChildCount = 0
-                categoryElem['Children'].forEach(function(child) {
+                categoryElem['Children'].forEach(function (child) {
                     applyCategoryFormStatus(child, filter, checkedCategoryNames, openParentNames);
                     if (child['Visibility']) {
                         visibleChildCount++;
@@ -175,7 +179,7 @@
                  </div>`;
 
                 root += `<ul class="tree-ul ${categoryElem['Open'] ? '' : 'd-none'}">`;
-                categoryElem['Children'].forEach(function(child) {
+                categoryElem['Children'].forEach(function (child) {
                     root += createCategoryElemDOMStr(child);
                 });
                 root += '</ul>';
@@ -198,11 +202,11 @@
             $('#category').empty();
 
             let categoryListRoot = $('<ul class="tree-ul tree-top">');
-            categoryData.forEach(function(categoryElem) {
+            categoryData.forEach(function (categoryElem) {
                 categoryListRoot.append(createCategoryElemDOMStr(categoryElem));
             });
             categoryListRoot.append('</ul>');
-            
+
             $('#category').append(categoryListRoot);
 
             $("#filter [name=categoryCheckBox]").click(function () {
@@ -210,14 +214,14 @@
                 updateLogText();
             });
 
-            $('#filter [name=tree-parent]').click(function() {
+            $('#filter [name=tree-parent]').click(function () {
                 $(this).toggleClass('tree-parent-open');
-                $(this).parent().parent().children('ul').each(function(index, elem) {
+                $(this).parent().parent().children('ul').each(function (index, elem) {
                     $(elem).toggleClass('d-none')
                 });
             });
 
-            $('#filter [name=parentCategoryCheckBox]').click(function() {
+            $('#filter [name=parentCategoryCheckBox]').click(function () {
                 let childrenRoot = $(this).parent().parent().children('ul');
                 childrenRoot.find('[name=categoryCheckBox]').prop('checked', this.checked);
                 childrenRoot.find('[name=parentCategoryCheckBox]').prop('checked', this.checked);
@@ -227,7 +231,7 @@
         }
 
         function updateParentCategoryAllCheck() {
-            $('#filter [name=parentCategoryCheckBox]').each(function() {
+            $('#filter [name=parentCategoryCheckBox]').each(function () {
                 let childrenRoot = $(this).parent().parent().children('ul');
                 let allChecked = childrenRoot.find('[name=categoryCheckBox]:checked').length == childrenRoot.find('[name=categoryCheckBox]').length;
                 $(this).prop('checked', allChecked);
@@ -252,7 +256,7 @@
 
             updateCategoryDOM(categoryOriginalData);
             updateVerbosityAllCheck();
-            updateParentCategoryAllCheck();            
+            updateParentCategoryAllCheck();
             updateLogText();
 
             $('#allCheckVerbosity').click(function () {
@@ -263,7 +267,7 @@
             $("#filter [name=verbosity]").click(function () {
                 updateVerbosityAllCheck();
                 updateLogText();
-            });            
+            });
 
             $('#categoryFilterInput').on('input', function () {
                 const filter = $('#categoryFilterInput').val();
@@ -302,6 +306,7 @@
             });
 
         });
+
         $(window).resize(function () {
             hsize = $(window).height();
             $("#editor").css("height", hsize * 0.8 + "px");
