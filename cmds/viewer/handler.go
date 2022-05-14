@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -171,29 +170,15 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	queryFilter := db.NewFilterFromLogID(id)
-
-	var verbosityFilter db.Verbosity
-	if verbosityFilterStr := c.QueryParam("verbosity"); verbosityFilterStr != "" {
-		for _, verbosityType := range strings.Split(verbosityFilterStr, ",") {
-			if verbosityFlag, ok := toVerbosityFlag[verbosityType]; ok {
-				verbosityFilter |= verbosityFlag
-			}
-		}
-	} else {
-		verbosityFilter = db.Log | db.Warning | db.Error | db.Display | db.Verbose | db.VeryVerbose
-	}
-
 	verbosityFilterInfos := []FilterInfo{}
 	for i := 0; i < db.VerbosityNum; i++ {
 		flag := db.Verbosity(1 << i)
-		info, err := NewVerbosityFilterInfo(flag, verbosityFilter&flag != 0)
+		info, err := NewVerbosityFilterInfo(flag, true)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 		verbosityFilterInfos = append(verbosityFilterInfos, info)
 	}
-	queryFilter.Verbosity = verbosityFilter
 
 	categoryFilterInfos := []FilterInfo{}
 	categories, err := h.querier.GetCategories(c.Request().Context(), id)
@@ -201,12 +186,6 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	var checkedCategories []string
-	if categirtFilterStr := c.QueryParam("category"); categirtFilterStr != "" {
-		checkedCategories = strings.Split(categirtFilterStr, ",")
-	}
-
-	hasCategoryFilter := len(checkedCategories) > 0
 	for _, category := range categories {
 		categoryForHTML := category
 
@@ -215,50 +194,32 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 			categoryForHTML = "(none)"
 		}
 
-		checked := false
-		if hasCategoryFilter {
-			for idx := range checkedCategories {
-				if checkedCategories[idx] == categoryForHTML {
-					checked = true
-					break
-				}
-			}
-			if checked {
-				queryFilter.Categories = append(queryFilter.Categories, category)
-			}
-		} else {
-			checked = true
-		}
-
-		categoryFilterInfos = append(categoryFilterInfos, NewCategoryFilterInfo(categoryForHTML, checked))
+		categoryFilterInfos = append(categoryFilterInfos, NewCategoryFilterInfo(categoryForHTML, true))
 	}
 
 	logBuilder := LogBuilder{}
-	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, queryFilter)
+
+	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, db.NewFilterFromLogID(id))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Query failed")
 	}
-	log := logBuilder.String()
-	if log == "" {
-		log = "No Data"
-	}
 
 	data := struct {
-		Log                  string
 		LogID                string
 		DownloadLink         string
 		LogIdQuery           string
 		VerbosityFilterInfos []FilterInfo
 		CategoryFilterInfos  []FilterInfo
 		CategoryJsonData     []*CategoryData
+		LogData              []Log
 	}{
-		Log:                  log,
 		LogID:                h.getLogIdStr(id),
 		DownloadLink:         fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
 		LogIdQuery:           getLogIdQueryParam(id),
 		VerbosityFilterInfos: verbosityFilterInfos,
 		CategoryFilterInfos:  categoryFilterInfos,
 		CategoryJsonData:     []*CategoryData{NewCaregoryDataBuilder().CreateCategoryData(categoryFilterInfos)},
+		LogData:              logBuilder.LogData,
 	}
 
 	return c.Render(http.StatusOK, "viewer.html", data)
