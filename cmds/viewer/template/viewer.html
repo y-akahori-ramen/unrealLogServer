@@ -38,16 +38,17 @@
                         {{end}}
 
                         <label class="form-label">CategoryFilter</label>
+                        <input type="search" class="form-control" autocomplete="off" placeholder="Type to filter..." id="categoryFilterInput">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="allCheckCategory">
                             <label class="form-check-label">Check All</label>
                         </div>
                         {{range .CategoryFilterInfos}}
-                        <div class="form-check">
+                        <div class="form-check" name="category">
                             {{ if .Checked }}
-                            <input class="form-check-input" type="checkbox" name="category" value="{{.Name}}" checked>
+                            <input class="form-check-input" type="checkbox" name="categoryCheckBox" value="{{.Name}}" checked>
                             {{ else }}
-                            <input class="form-check-input" type="checkbox" name="category" value="{{.Name}}">
+                            <input class="form-check-input" type="checkbox" name="categoryCheckBox" value="{{.Name}}">
                             {{end}}
                             <label class="form-check-label">{{.Name}}</label>
                         </div>
@@ -85,7 +86,7 @@
         var data = "{{.Log}}";
 
         function updateCategoryAllCheck() {
-            var allChecked = $("#filter [name=category]:checked").length == $("#filter [name=category]").length;
+            var allChecked = $("#filter [name=categoryCheckBox]:checked").length == $("#filter [name=categoryCheckBox]").length;
             $('#allCheckCategory').prop('checked', allChecked);
         }
 
@@ -116,7 +117,7 @@
                 })
 
                 var categoryQueryParam = ""
-                $("#filter [name=category]:checked").each(function() {
+                $("#filter [name=categoryCheckBox]:checked").each(function() {
                     categoryQueryParam += $(this).val() + ",";
                 })
 
@@ -130,24 +131,36 @@
                 }
 
                 location.href = requestUrl;
-                // $(window).location.
-                // window.location.href = "/"
             });
 
             $('#allCheckCategory').click(function() {
-                $("#filter [name=category]").prop('checked', this.checked);
+                $("#filter [name=categoryCheckBox]").prop('checked', this.checked);
             });
 
             $('#allCheckVerbosity').click(function() {
                 $("#filter [name=verbosity]").prop('checked', this.checked);
             });
 
-            $("#filter [name=category]").click(function() {
+            $("#filter [name=categoryCheckBox]").click(function() {
                 updateCategoryAllCheck();
             });
 
             $("#filter [name=verbosity]").click(function() {
                 updateVerbosityAllCheck();
+            });
+
+            $('#categoryFilterInput').on('input', function() {
+                const filter =  $('#categoryFilterInput').val().toUpperCase();
+                console.log('input value:', filter, 'length:', filter.length);
+                $("#filter [name=category]").each(function(index, elem) {
+                    const categoryName = $(elem).children('[name=categoryCheckBox]').val().toUpperCase()
+                    const visible = categoryName.indexOf(filter) > -1;
+                    if (visible) {
+                        elem.setAttribute('class', 'form-check');
+                    } else {
+                        elem.setAttribute('class', 'form-check d-none');
+                    }
+                });
             });
         });
         $(window).resize(function () {
