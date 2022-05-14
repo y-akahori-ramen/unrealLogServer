@@ -140,7 +140,7 @@
             return root;
         }
 
-        function updateCategory(categoryData) {
+        function updateCategoryDOM(categoryData) {
             $("#filter [name=categoryCheckBox]").off('click');
             $('#filter [name=tree-parent]').off('click');
             $('#filter [name=parentCategoryCheckBox]').off('click');
@@ -198,7 +198,7 @@
             editor.moveCursorTo(0, 0);
             editor.setReadOnly(true);
 
-            updateCategory(categoryOriginalData);
+            updateCategoryDOM(categoryOriginalData);
             updateVerbosityAllCheck();
             updateParentCategoryAllCheck();            
 
@@ -255,7 +255,7 @@
                 filterdCategoryData.forEach(function (categoryElem) {
                     applyCategoryFormStatus(categoryElem, filter, checkedCategoryNames, openParentNames);
                 });
-                updateCategory(filterdCategoryData);
+                updateCategoryDOM(filterdCategoryData);
             });
 
 
