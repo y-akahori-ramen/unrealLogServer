@@ -170,7 +170,7 @@
             if (categoryElem['Children'].length > 0) {
                 root += `<div class="form-group">
                  <input class="form-check-input" type="checkbox" name="parentCategoryCheckBox" value="${categoryElem['Name']}" ${categoryElem['Checked'] ? 'checked' : ''}>
-                 <label class="form-check-label tree-parent ${categoryElem['Open'] ? 'tree-parent-open' : ''}" name="tree-parent">${categoryElem['Name']}</label>
+                 <label class="form-check-label tree-parent ${categoryElem['Open'] ? 'tree-parent-open' : ''}" name="tree-parent">${categoryElem['DisplayName']}</label>
                  </div>`;
 
                 root += `<ul class="tree-ul ${categoryElem['Open'] ? '' : 'd-none'}">`;
@@ -181,7 +181,7 @@
             } else {
                 root += `<div class="form-check" name="category">
                     <input class="form-check-input" type="checkbox" name="categoryCheckBox" value="${categoryElem['Name']}" ${categoryElem['Checked'] ? 'checked' : ''}>
-                    <label class="form-check-label">${categoryElem['Name']}</label>
+                    <label class="form-check-label">${categoryElem['DisplayName']}</label>
                 </div>`;
             }
             root += '</li>';
