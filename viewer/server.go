@@ -27,7 +27,7 @@ func NewServer(querier db.Querier, timeLocation *time.Location) (*Server, error)
 	e := echo.New()
 	e.Renderer = handler.Renderer()
 	e.Use(middleware.Logger())
-	e.StaticFS("/", staticAssets)
+	e.StaticFS("/", echo.MustSubFS(staticAssets, "static"))
 
 	e.GET("/", handler.HandleIndex)
 	e.GET("/viewer", handler.HandleViewer)
