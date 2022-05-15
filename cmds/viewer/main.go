@@ -1,18 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/y-akahori-ramen/unrealLogServer/db"
 	elasticdb "github.com/y-akahori-ramen/unrealLogServer/db/elastic"
+	"github.com/y-akahori-ramen/unrealLogServer/viewer"
 )
 
 type Config struct {
@@ -79,19 +83,34 @@ func main() {
 		log.Fatal(err)
 	}
 
-	handle, err := NewHandler(querier, timeLocation)
+	server, err := viewer.NewServer(querier, timeLocation)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	e := echo.New()
-	e.Renderer = handle.Renderer()
-	e.Use(middleware.Logger())
-	e.Static("/", "static")
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	e.GET("/", handle.HandleIndex)
-	e.GET("/viewer", handle.HandleViewer)
-	e.GET("/download", handle.HandleDownloadLog)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-sigChan
 
-	e.Logger.Fatal(e.Start(config.Address))
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := server.Start(config.Address); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	wg.Wait()
 }

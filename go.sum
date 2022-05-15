@@ -42,8 +42,6 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.2.1 h1:TVEnxayobAdVkhQfrfes2IzOB6o+z4roRkPF52WA1u4=
 github.com/valyala/fasttemplate v1.2.1/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
-github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509044545-7a40250dbf06 h1:veliw5D708D7IGjEwZmPZk5GtZu11jfncuwHkbziuQ8=
-github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509044545-7a40250dbf06/go.mod h1:+x6Lr1sm45KlNxK0zB5Zwr5nWwPWjzrdAtgrvqwYZWA=
 github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509144505-bf5e33985c73 h1:UCs+QoqPKVOgkGlZn5WSPzbEt5Hk9zQIxyZ73eTd9ko=
 github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509144505-bf5e33985c73/go.mod h1:+x6Lr1sm45KlNxK0zB5Zwr5nWwPWjzrdAtgrvqwYZWA=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

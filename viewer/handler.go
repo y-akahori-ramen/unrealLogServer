@@ -1,6 +1,7 @@
-package main
+package viewer
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"html/template"
@@ -20,8 +21,11 @@ type Handler struct {
 	timeLocation *time.Location
 }
 
+//go:embed template/*
+var temlateAssets embed.FS
+
 func NewHandler(querier db.Querier, timeLocation *time.Location) (*Handler, error) {
-	tmplates, err := template.ParseGlob("template/*.html")
+	tmplates, err := template.ParseFS(temlateAssets, "template/*.html")
 	if err != nil {
 		return nil, err
 	}
