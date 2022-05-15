@@ -12,26 +12,31 @@ type Log struct {
 	Verbosity string
 }
 
-type LogBuilder struct {
-	builder strings.Builder
-	LogData []Log
+type LogDataBuilder struct {
+	logData []Log
 }
 
-func (l *LogBuilder) HandleLog(log unreallogserver.Log) error {
-	verbosity := log.Verbosity
-	if verbosity == "" {
-		verbosity = "Log"
-	}
-	category := log.Category
-	if category == "" {
-		category = "(none)"
-	}
+func (l *LogDataBuilder) HandleLog(log unreallogserver.Log) error {
+	verbosity := ToVerbosityNameForHTML(log.Verbosity)
+	category := ToCategoryNameForHTML(log.Category)
 
-	l.LogData = append(l.LogData, Log{Log: log.Log, Category: category, Verbosity: verbosity})
+	l.logData = append(l.logData, Log{Log: log.Log, Category: category, Verbosity: verbosity})
+	return nil
+}
+
+func (l *LogDataBuilder) LogData() []Log {
+	return l.logData
+}
+
+type LogStrBuilder struct {
+	builder strings.Builder
+}
+
+func (l *LogStrBuilder) HandleLog(log unreallogserver.Log) error {
 	_, err := l.builder.WriteString(log.Log)
 	return err
 }
 
-func (l *LogBuilder) String() string {
+func (l *LogStrBuilder) String() string {
 	return l.builder.String()
 }

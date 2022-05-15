@@ -12,6 +12,10 @@ type CategoryData struct {
 	Children   []*CategoryData
 }
 
+func NewCategoryData(categoryName string) *CategoryData {
+	return &CategoryData{Name: categoryName, Checked: true, Visibility: true, Open: false, Children: []*CategoryData{}}
+}
+
 var logCategory = regexp.MustCompile(`^Log.+`)
 
 type CaregoryDataBuilder struct {
@@ -34,17 +38,18 @@ func (c *CaregoryDataBuilder) getParentCategoryData(parentName string) *Category
 	}
 }
 
-func (c *CaregoryDataBuilder) CreateCategoryData(categoryFilterInfos []FilterInfo) *CategoryData {
+func (c *CaregoryDataBuilder) CreateCategoryData(categoryNames []string) *CategoryData {
 	c.parentCategories = make(map[string]*CategoryData)
 
-	c.root = &CategoryData{Name: "All", Checked: false, Visibility: true, Open: true, Children: []*CategoryData{}}
+	c.root = NewCategoryData("All")
+	c.root.Open = true // 1階層目だけ最初から開けておく
 	c.parentCategories["All"] = c.root
 
-	for _, category := range categoryFilterInfos {
-		categoryData := &CategoryData{Name: category.Name, Checked: category.Checked, Visibility: true, Open: false, Children: []*CategoryData{}}
+	for _, categoryName := range categoryNames {
+		categoryData := NewCategoryData(categoryName)
 
 		// Logから始まるカテゴリが多いためLog*の子要素としてViewerのカテゴリ一覧の可読性を上げる
-		if logCategory.MatchString(category.Name) {
+		if logCategory.MatchString(categoryName) {
 			parentCategoryData := c.getParentCategoryData("Log*")
 			parentCategoryData.Children = append(parentCategoryData.Children, categoryData)
 		} else {

@@ -52,15 +52,10 @@
                                     <input class="form-check-input" type="checkbox" id="allCheckVerbosity">
                                     <label class="form-check-label">Check All</label>
                                 </div>
-                                {{range .VerbosityFilterInfos}}
+                                {{range .VerbosityNames}}
                                 <div class="form-check">
-                                    {{ if .Checked }}
-                                    <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}"
-                                        checked>
-                                    {{ else }}
-                                    <input class="form-check-input" type="checkbox" name="verbosity" value="{{.Name}}">
-                                    {{end}}
-                                    <label class="form-check-label">{{.Name}}</label>
+                                    <input class="form-check-input" type="checkbox" name="verbosity" value="{{.}}" checked>
+                                    <label class="form-check-label">{{.}}</label>
                                 </div>
                                 {{end}}
 

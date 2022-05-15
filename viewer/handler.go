@@ -134,38 +134,31 @@ func (h *Handler) HandleIndex(c echo.Context) error {
 	return c.Render(http.StatusOK, "index.html", data)
 }
 
-var toVerbosityFlag = map[string]db.Verbosity{
-	"Log":          db.Log,
-	"Warning":      db.Warning,
-	"Error":        db.Error,
-	"Display":      db.Display,
-	"Verbose":      db.Verbose,
-	"VeryVerbosse": db.VeryVerbose,
-}
-var toVerbosityName = map[db.Verbosity]string{
-	db.Log:         "Log",
-	db.Warning:     "Warning",
-	db.Error:       "Error",
-	db.Display:     "Display",
-	db.Verbose:     "Verbose",
-	db.VeryVerbose: "VeryVerbosse",
+var verbosityNames = []string{
+	"Log",
+	"Warning",
+	"Error",
+	"Display",
+	"Verbose",
+	"VeryVerbose",
 }
 
-type FilterInfo struct {
-	Name    string
-	Checked bool
-}
-
-func NewVerbosityFilterInfo(verbosityType db.Verbosity, selected bool) (FilterInfo, error) {
-	if name, ok := toVerbosityName[verbosityType]; ok {
-		return FilterInfo{Name: name, Checked: selected}, nil
+func ToCategoryNameForHTML(categoryName string) string {
+	// カテゴリなしはDBには空文字で登録されているがHTML上で分かりにくいため(none)という文字列で表示する
+	if categoryName == "" {
+		return "(none)"
 	} else {
-		return FilterInfo{}, errors.New("Unknown verbosity type")
+		return categoryName
 	}
 }
 
-func NewCategoryFilterInfo(name string, checked bool) FilterInfo {
-	return FilterInfo{Name: name, Checked: checked}
+func ToVerbosityNameForHTML(verbosityName string) string {
+	// LogレベルはUE上ではVerbosity名が表示されないため""となっている。HTML上でわかりにくいため"Log"という文字列で表示する
+	if verbosityName == "" {
+		return "Log"
+	} else {
+		return verbosityName
+	}
 }
 
 func (h *Handler) HandleViewer(c echo.Context) error {
@@ -174,34 +167,17 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	verbosityFilterInfos := []FilterInfo{}
-	for i := 0; i < db.VerbosityNum; i++ {
-		flag := db.Verbosity(1 << i)
-		info, err := NewVerbosityFilterInfo(flag, true)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		}
-		verbosityFilterInfos = append(verbosityFilterInfos, info)
-	}
-
-	categoryFilterInfos := []FilterInfo{}
+	categoryNames := []string{}
 	categories, err := h.querier.GetCategories(c.Request().Context(), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	for _, category := range categories {
-		categoryForHTML := category
-
-		// カテゴリなしはDBには空文字で登録されているがHTML上で分かりにくいため(none)という文字列で表示する
-		if category == "" {
-			categoryForHTML = "(none)"
-		}
-
-		categoryFilterInfos = append(categoryFilterInfos, NewCategoryFilterInfo(categoryForHTML, true))
+		categoryNames = append(categoryNames, ToCategoryNameForHTML(category))
 	}
 
-	logBuilder := LogBuilder{}
+	logBuilder := LogDataBuilder{}
 
 	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, db.NewFilterFromLogID(id))
 	if err != nil {
@@ -209,21 +185,19 @@ func (h *Handler) HandleViewer(c echo.Context) error {
 	}
 
 	data := struct {
-		LogID                string
-		DownloadLink         string
-		LogIdQuery           string
-		VerbosityFilterInfos []FilterInfo
-		CategoryFilterInfos  []FilterInfo
-		CategoryJsonData     []*CategoryData
-		LogData              []Log
+		LogID            string
+		DownloadLink     string
+		LogIdQuery       string
+		VerbosityNames   []string
+		CategoryJsonData []*CategoryData
+		LogData          []Log
 	}{
-		LogID:                h.getLogIdStr(id),
-		DownloadLink:         fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
-		LogIdQuery:           getLogIdQueryParam(id),
-		VerbosityFilterInfos: verbosityFilterInfos,
-		CategoryFilterInfos:  categoryFilterInfos,
-		CategoryJsonData:     []*CategoryData{NewCaregoryDataBuilder().CreateCategoryData(categoryFilterInfos)},
-		LogData:              logBuilder.LogData,
+		LogID:            h.getLogIdStr(id),
+		DownloadLink:     fmt.Sprintf("/download?%s", getLogIdQueryParam(id)),
+		LogIdQuery:       getLogIdQueryParam(id),
+		VerbosityNames:   verbosityNames,
+		CategoryJsonData: []*CategoryData{NewCaregoryDataBuilder().CreateCategoryData(categoryNames)},
+		LogData:          logBuilder.LogData(),
 	}
 
 	return c.Render(http.StatusOK, "viewer.html", data)
@@ -235,7 +209,7 @@ func (h *Handler) HandleDownloadLog(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	logBuilder := LogBuilder{}
+	logBuilder := LogStrBuilder{}
 	err = h.querier.GetLog(c.Request().Context(), logBuilder.HandleLog, db.NewFilterFromLogID(id))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Query failed")
