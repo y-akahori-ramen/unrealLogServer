@@ -7,31 +7,32 @@ import (
 	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 )
 
-type FluentdHandle struct {
+// FluentdLogHandle Send log to fluentd
+type FluentdLogHandle struct {
 	logger   *fluent.Fluent
 	hostName string
 	platform string
 	tag      string
 }
 
-func NewFluentdHandle(tag string, platform string, fluentConf fluent.Config) (*FluentdHandle, error) {
+func NewFluentdLogHandle(tag string, platform string, fluentConf fluent.Config) (*FluentdLogHandle, error) {
 	logger, err := fluent.New(fluent.Config(fluentConf))
 	if err != nil {
-		return &FluentdHandle{}, err
+		return &FluentdLogHandle{}, err
 	}
 
 	host, err := os.Hostname()
 	if err != nil {
-		return &FluentdHandle{}, err
+		return &FluentdLogHandle{}, err
 	}
-	return &FluentdHandle{platform: platform, tag: tag, hostName: host, logger: logger}, nil
+	return &FluentdLogHandle{platform: platform, tag: tag, hostName: host, logger: logger}, nil
 }
 
-func (h *FluentdHandle) Close() {
-	h.logger.Close()
+func (h *FluentdLogHandle) Close() error {
+	return h.logger.Close()
 }
 
-func (h *FluentdHandle) HandleLog(log unreallogserver.Log) error {
+func (h *FluentdLogHandle) HandleLog(log unreallogserver.Log) error {
 	logID := unreallogserver.LogId{Host: h.hostName, Platform: h.platform, FileOpenAtUnixMilli: log.FileOpenAt.UnixMilli()}
 	logData := map[string]interface{}{
 		"Host":                h.hostName,

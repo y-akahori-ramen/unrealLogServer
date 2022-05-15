@@ -53,7 +53,7 @@ func LoadConfig(configPath string) (*Config, error) {
 
 type Target struct {
 	config         TargetConfig
-	fluentdHandler *watcher.FluentdHandle
+	fluentdHandler *watcher.FluentdLogHandle
 }
 
 func NewTarget(config TargetConfig, fluentConf fluent.Config) (*Target, error) {
@@ -67,7 +67,7 @@ func NewTarget(config TargetConfig, fluentConf fluent.Config) (*Target, error) {
 		return nil, fmt.Errorf("path is none")
 	}
 
-	fluentdHandler, err := watcher.NewFluentdHandle(config.Tag, config.Platform, fluentConf)
+	fluentdHandler, err := watcher.NewFluentdLogHandle(config.Tag, config.Platform, fluentConf)
 	if err != nil {
 		return nil, err
 	}
