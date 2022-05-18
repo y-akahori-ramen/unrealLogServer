@@ -46,6 +46,8 @@ github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518152300-1a906eb677ba h1:qu
 github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518152300-1a906eb677ba/go.mod h1:3IsENT1Lf3L/WKlSUhsEMFGa1v2nrjPVHJVlBM78wj4=
 github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518153347-9c5c9fb58599 h1:FK6wOq5Ex1xg8VS/R112U36gT36S021GJ19uK9zu6PU=
 github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518153347-9c5c9fb58599/go.mod h1:3IsENT1Lf3L/WKlSUhsEMFGa1v2nrjPVHJVlBM78wj4=
+github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518164336-eb53f4f66d78 h1:uzVjMH4T7E6FtBviq+2ZKbBfi4hwESznnlOofSBQ6VA=
+github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518164336-eb53f4f66d78/go.mod h1:3IsENT1Lf3L/WKlSUhsEMFGa1v2nrjPVHJVlBM78wj4=
 github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509144505-bf5e33985c73 h1:UCs+QoqPKVOgkGlZn5WSPzbEt5Hk9zQIxyZ73eTd9ko=
 github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220509144505-bf5e33985c73/go.mod h1:+x6Lr1sm45KlNxK0zB5Zwr5nWwPWjzrdAtgrvqwYZWA=
 github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220511125349-4e400c960709 h1:9DBldnmq4JpRav1LuZPTElggtDEX/5mX1eLf5HGOqKc=

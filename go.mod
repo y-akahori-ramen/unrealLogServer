@@ -21,7 +21,7 @@ require (
 	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
-	github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518153347-9c5c9fb58599 // indirect
+	github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518164336-eb53f4f66d78 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
