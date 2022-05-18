@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
-	"fmt"
-	"io/fs"
 	"log"
 	"os"
 	"os/signal"
@@ -15,16 +13,7 @@ import (
 	"time"
 
 	"github.com/fluent/fluent-logger-golang/fluent"
-	unreallognotify "github.com/y-akahori-ramen/unrealLogNotify"
-	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
-	"github.com/y-akahori-ramen/unrealLogServer/watcher"
 )
-
-type TargetConfig struct {
-	Tag      string `json:"tag"`
-	Path     string `json:"path"`
-	Platform string `json:"platform"`
-}
 
 type Config struct {
 	fluent.Config
@@ -49,84 +38,6 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	return &config, nil
-}
-
-type Target struct {
-	config         TargetConfig
-	fluentdHandler *watcher.FluentdLogHandle
-}
-
-func NewTarget(config TargetConfig, fluentConf fluent.Config) (*Target, error) {
-	if config.Tag == "" {
-		return nil, fmt.Errorf("tag is none")
-	}
-	if config.Platform == "" {
-		return nil, fmt.Errorf("patform is none")
-	}
-	if config.Path == "" {
-		return nil, fmt.Errorf("path is none")
-	}
-
-	fluentdHandler, err := watcher.NewFluentdLogHandle(config.Tag, config.Platform, fluentConf)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Target{fluentdHandler: fluentdHandler, config: config}, nil
-}
-
-func (t *Target) Close() {
-	t.fluentdHandler.Close()
-}
-
-func (t *Target) checkFileExist(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
-	var err error
-	for {
-		select {
-		case <-ticker.C:
-			_, err = os.Stat(t.config.Path)
-			if err == nil {
-				log.Printf("File found. Path:%s", t.config.Path)
-				return nil
-			} else if errors.Is(err, fs.ErrNotExist) {
-				log.Printf("File not exist, retry after one scond. Path:%s", t.config.Path)
-			} else {
-				return err
-			}
-		case <-ctx.Done():
-			return err
-		}
-	}
-}
-
-func (t *Target) Wach(ctx context.Context, watchInterval time.Duration) error {
-	log.Printf("Start waching. Tag:%s Platform:%s Path:%s", t.config.Tag, t.config.Platform, t.config.Platform)
-
-	for {
-		err := t.checkFileExist(ctx)
-		if err != nil {
-			return err
-		}
-
-		watcher := watcher.NewWatcher(watchInterval)
-		watcher.AddHandler(t.handleLog)
-		err = watcher.Watch(ctx, t.config.Path)
-		if err != unreallognotify.ErrFileRemoved {
-			return err
-		}
-	}
-}
-
-func (t *Target) handleLog(log unreallogserver.Log) error {
-	err := t.fluentdHandler.HandleLog(log)
-	if err != nil {
-		return err
-	}
-
-	// Elastic searchのtimesampがログごとに分かれるようにelastic serachのtimestampの最小単位分スリープさせる
-	time.Sleep(time.Millisecond)
-	return nil
 }
 
 func main() {

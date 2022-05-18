@@ -1,9 +1,11 @@
-package watcher
+package logger
 
 import (
 	"os"
+	"time"
 
 	"github.com/fluent/fluent-logger-golang/fluent"
+	ueloghandler "github.com/y-akahori-ramen/ueLogHandler"
 	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 )
 
@@ -13,9 +15,10 @@ type FluentdLogHandle struct {
 	hostName string
 	platform string
 	tag      string
+	loc      *time.Location
 }
 
-func NewFluentdLogHandle(tag string, platform string, fluentConf fluent.Config) (*FluentdLogHandle, error) {
+func NewFluentdLogHandle(tag string, platform string, fluentConf fluent.Config, loc *time.Location) (*FluentdLogHandle, error) {
 	logger, err := fluent.New(fluent.Config(fluentConf))
 	if err != nil {
 		return &FluentdLogHandle{}, err
@@ -25,19 +28,24 @@ func NewFluentdLogHandle(tag string, platform string, fluentConf fluent.Config) 
 	if err != nil {
 		return &FluentdLogHandle{}, err
 	}
-	return &FluentdLogHandle{platform: platform, tag: tag, hostName: host, logger: logger}, nil
+	return &FluentdLogHandle{platform: platform, tag: tag, hostName: host, logger: logger, loc: loc}, nil
 }
 
 func (h *FluentdLogHandle) Close() error {
 	return h.logger.Close()
 }
 
-func (h *FluentdLogHandle) HandleLog(log unreallogserver.Log) error {
-	logID := unreallogserver.LogId{Host: h.hostName, Platform: h.platform, FileOpenAtUnixMilli: log.FileOpenAt.UnixMilli()}
+func (h *FluentdLogHandle) HandleLog(log ueloghandler.Log) error {
+	fileOpenTime, err := log.ParseFileOpenTime(h.loc)
+	if err != nil {
+		return err
+	}
+
+	logID := unreallogserver.LogId{Host: h.hostName, Platform: h.platform, FileOpenAtUnixMilli: fileOpenTime.UnixMilli()}
 	logData := map[string]interface{}{
 		"Host":                h.hostName,
 		"Platform":            h.platform,
-		"FileOpenAtUnixMilli": log.FileOpenAt.UnixMilli(),
+		"FileOpenAtUnixMilli": fileOpenTime.UnixMilli(),
 		"Frame":               log.Frame,
 		"Log":                 log.Log,
 		"Category":            log.Category,
@@ -45,7 +53,7 @@ func (h *FluentdLogHandle) HandleLog(log unreallogserver.Log) error {
 		"LogID":               logID.String(),
 	}
 
-	err := h.logger.Post(h.tag, logData)
+	err = h.logger.Post(h.tag, logData)
 	if err != nil {
 		return err
 	}
