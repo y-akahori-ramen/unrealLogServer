@@ -246,14 +246,6 @@ services:
     command: >
       bash -c '
         cd ./cmds/viewer
-        rm -rf /usr/viewer/template
-        mkdir -p /usr/viewer/template
-        cp -r /usr/unrealLogServer/cmds/viewer/template /usr/viewer/
-
-        rm -rf /usr/viewer/static
-        mkdir -p /usr/viewer/static
-        cp -r /usr/unrealLogServer/cmds/viewer/static /usr/viewer/
-
         go build -o /usr/viewer/viewer_docker
         cd /usr/viewer/
         echo -ne \
