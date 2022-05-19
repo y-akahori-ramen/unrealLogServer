@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 	"github.com/y-akahori-ramen/unrealLogServer/db"
 )
 
@@ -45,20 +44,20 @@ func (h *Handler) getFileOpenAtStr(fileOpenAtUnixMilli int64) string {
 	return time.UnixMilli(fileOpenAtUnixMilli).In(h.timeLocation).Format("2006/01/02 15:04:05")
 }
 
-func (h *Handler) getLogIdStr(id unreallogserver.LogId) string {
+func (h *Handler) getLogIdStr(id db.LogId) string {
 	return fmt.Sprintf("%s_%s_%s", id.Host, id.Platform, h.getFileOpenAtStr(id.FileOpenAtUnixMilli))
 }
 
-func getLogIdQueryParam(id unreallogserver.LogId) string {
+func getLogIdQueryParam(id db.LogId) string {
 	return fmt.Sprintf("host=%s&platform=%s&fileOpenAt=%d", id.Host, id.Platform, id.FileOpenAtUnixMilli)
 }
 
-func getLogIdFromQuery(c echo.Context) (unreallogserver.LogId, error) {
+func getLogIdFromQuery(c echo.Context) (db.LogId, error) {
 	host := c.QueryParam("host")
 	platform := c.QueryParam("platform")
 	fileOpenAtStr := c.QueryParam("fileOpenAt")
 	if host == "" || platform == "" || fileOpenAtStr == "" {
-		return unreallogserver.LogId{}, errors.New("Invalid QueryParam")
+		return db.LogId{}, errors.New("invalid QueryParam")
 	}
 
 	var fileOpenAt int64
@@ -66,10 +65,10 @@ func getLogIdFromQuery(c echo.Context) (unreallogserver.LogId, error) {
 		var err error
 		fileOpenAt, err = strconv.ParseInt(fileOpenAtStr, 10, 64)
 		if err != nil {
-			return unreallogserver.LogId{}, errors.New("Parse fileOpenAt failed")
+			return db.LogId{}, errors.New("parse fileOpenAt failed")
 		}
 	}
-	id := unreallogserver.LogId{Host: host, Platform: platform, FileOpenAtUnixMilli: fileOpenAt}
+	id := db.LogId{Host: host, Platform: platform, FileOpenAtUnixMilli: fileOpenAt}
 	return id, nil
 }
 

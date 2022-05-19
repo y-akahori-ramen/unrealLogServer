@@ -3,7 +3,7 @@ package viewer
 import (
 	"strings"
 
-	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
+	"github.com/y-akahori-ramen/unrealLogServer/db"
 )
 
 type Log struct {
@@ -16,7 +16,7 @@ type LogDataBuilder struct {
 	logData []Log
 }
 
-func (l *LogDataBuilder) HandleLog(log unreallogserver.Log) error {
+func (l *LogDataBuilder) HandleLog(log db.LogData) error {
 	verbosity := ToVerbosityNameForHTML(log.Verbosity)
 	category := ToCategoryNameForHTML(log.Category)
 
@@ -32,7 +32,7 @@ type LogStrBuilder struct {
 	builder strings.Builder
 }
 
-func (l *LogStrBuilder) HandleLog(log unreallogserver.Log) error {
+func (l *LogStrBuilder) HandleLog(log db.LogData) error {
 	_, err := l.builder.WriteString(log.Log)
 	return err
 }

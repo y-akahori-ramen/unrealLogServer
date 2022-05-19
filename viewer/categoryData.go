@@ -31,10 +31,6 @@ func NewCaregoryDataBuilder() *CaregoryDataBuilder {
 	return &CaregoryDataBuilder{}
 }
 
-func (c *CaregoryDataBuilder) hasParent(categoryName string) bool {
-	return strings.ContainsRune(categoryName, '_')
-}
-
 func (c *CaregoryDataBuilder) getParentKey(categoryName string) string {
 	if logCategory.MatchString(categoryName) {
 		if categoryName == logCategoryParentKey {
@@ -43,7 +39,7 @@ func (c *CaregoryDataBuilder) getParentKey(categoryName string) string {
 			// Logから始まるカテゴリが多いためLog*の子要素としてViewerのカテゴリ一覧の可読性を上げる
 			return logCategoryParentKey
 		}
-	} else if strings.ContainsRune(categoryName, '_') {
+	} else if hasParent := strings.ContainsRune(categoryName, '_'); hasParent {
 		s := strings.Split(categoryName, "_")
 		return strings.Join(s[:len(s)-1], "_")
 	} else {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/fluent/fluent-logger-golang/fluent"
 	ueloghandler "github.com/y-akahori-ramen/ueLogHandler"
-	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
+	"github.com/y-akahori-ramen/unrealLogServer/db"
 )
 
 // FluentdLogHandle Send log to fluentd
@@ -41,7 +41,7 @@ func (h *FluentdLogHandle) HandleLog(log ueloghandler.Log) error {
 		return err
 	}
 
-	logID := unreallogserver.LogId{Host: h.hostName, Platform: h.platform, FileOpenAtUnixMilli: fileOpenTime.UnixMilli()}
+	logID := db.LogId{Host: h.hostName, Platform: h.platform, FileOpenAtUnixMilli: fileOpenTime.UnixMilli()}
 	logData := map[string]interface{}{
 		"Host":                h.hostName,
 		"Platform":            h.platform,

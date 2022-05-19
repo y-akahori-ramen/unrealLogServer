@@ -2,8 +2,6 @@ package db
 
 import (
 	"time"
-
-	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 )
 
 type Verbosity uint32
@@ -34,7 +32,7 @@ func NewFilter() Filter {
 	return Filter{}
 }
 
-func NewFilterFromLogID(id unreallogserver.LogId) Filter {
+func NewFilterFromLogID(id LogId) Filter {
 	return Filter{Hosts: []string{id.Host}, Platforms: []string{id.Platform}, FileOpenAtUnixMilli: id.FileOpenAtUnixMilli}
 }
 

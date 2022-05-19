@@ -4,12 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esutil"
-	unreallognotify "github.com/y-akahori-ramen/unrealLogNotify"
-	unreallogserver "github.com/y-akahori-ramen/unrealLogServer"
 	"github.com/y-akahori-ramen/unrealLogServer/db"
 )
 
@@ -88,7 +85,7 @@ func (q *ElasticQuerier) searchAllCollapseValues(ctx context.Context, collapseFi
 }
 
 // getLog ログを時刻の昇順で取得しlogHandlerに渡す
-func (q *ElasticQuerier) getLog(ctx context.Context, logHandler unreallogserver.LogHandler, filter db.Filter, searchAfter, size int) (int, int, error) {
+func (q *ElasticQuerier) getLog(ctx context.Context, logHandler db.LogHandler, filter db.Filter, searchAfter, size int) (int, int, error) {
 	// Elasticsearchではfromとsizeによる指定は10000を超える場合にエラーとなり、大量のドキュメントを取得する場合にはsearchAfterを使用することが推奨されている
 	// https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
 	// ログの行数が10000を超えることは十分にありえるためsearchafterによるデータ取得を行う
@@ -120,21 +117,12 @@ func (q *ElasticQuerier) getLog(ctx context.Context, logHandler unreallogserver.
 
 	for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
 		source := hit.(map[string]interface{})["_source"].(map[string]interface{})
-		fileOpenAtUnixMilli := (int64)(source["FileOpenAtUnixMilli"].(float64))
 		category := source["Category"].(string)
 		verbosity := source["Verbosity"].(string)
 		log := source["Log"].(string)
-		frame := source["Frame"].(string)
 		nextSearchAfter = (int)(hit.(map[string]interface{})["sort"].([]interface{})[0].(float64))
 
-		logInfo := unreallognotify.LogInfo{
-			Category:  category,
-			Verbosity: verbosity,
-			Log:       log,
-			Frame:     frame,
-		}
-
-		err = logHandler(unreallogserver.Log{LogInfo: logInfo, FileOpenAt: time.UnixMilli(fileOpenAtUnixMilli)})
+		err = logHandler(db.LogData{Category: category, Verbosity: verbosity, Log: log})
 		if err != nil {
 			return logCount, 0, err
 		}
@@ -144,7 +132,7 @@ func (q *ElasticQuerier) getLog(ctx context.Context, logHandler unreallogserver.
 	return logCount, nextSearchAfter, nil
 }
 
-func (q *ElasticQuerier) GetLog(ctx context.Context, logHandler unreallogserver.LogHandler, filter db.Filter) error {
+func (q *ElasticQuerier) GetLog(ctx context.Context, logHandler db.LogHandler, filter db.Filter) error {
 	const step = 1000
 	searchAfter := 0
 	for {
@@ -169,16 +157,16 @@ func (q *ElasticQuerier) GetPlatforms(ctx context.Context, filter db.Filter) ([]
 	return q.searchAllCollapseValues(ctx, "Platform", filter, "Platform:asc")
 }
 
-func (q *ElasticQuerier) GetCategories(ctx context.Context, id unreallogserver.LogId) ([]string, error) {
+func (q *ElasticQuerier) GetCategories(ctx context.Context, id db.LogId) ([]string, error) {
 	return q.searchAllCollapseValues(ctx, "Category", db.NewFilterFromLogID(id), "Category:asc")
 }
 
-func (q *ElasticQuerier) GetVerbosities(ctx context.Context, id unreallogserver.LogId) ([]string, error) {
+func (q *ElasticQuerier) GetVerbosities(ctx context.Context, id db.LogId) ([]string, error) {
 	return q.searchAllCollapseValues(ctx, "Verbosity", db.NewFilterFromLogID(id), "Verbosity:asc")
 }
 
-func (q *ElasticQuerier) GetIds(ctx context.Context, filter db.Filter, from int, size int) ([]unreallogserver.LogId, error) {
-	ids := []unreallogserver.LogId{}
+func (q *ElasticQuerier) GetIds(ctx context.Context, filter db.Filter, from int, size int) ([]db.LogId, error) {
+	ids := []db.LogId{}
 
 	query := CreateCollapseQuery("LogID", filter)
 
@@ -211,7 +199,7 @@ func (q *ElasticQuerier) GetIds(ctx context.Context, filter db.Filter, from int,
 		host := source["Host"].(string)
 		platform := source["Platform"].(string)
 		fileOpenAtUnixMilli := (int64)(source["FileOpenAtUnixMilli"].(float64))
-		id := unreallogserver.LogId{Host: host, Platform: platform, FileOpenAtUnixMilli: fileOpenAtUnixMilli}
+		id := db.LogId{Host: host, Platform: platform, FileOpenAtUnixMilli: fileOpenAtUnixMilli}
 		ids = append(ids, id)
 	}
 

@@ -8,6 +8,7 @@ require (
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220518164336-eb53f4f66d78
 	github.com/y-akahori-ramen/unrealLogNotify v0.0.0-20220511125349-4e400c960709
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f
 )
 
 require (
@@ -23,7 +24,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
-	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
