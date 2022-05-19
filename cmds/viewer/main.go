@@ -69,7 +69,7 @@ func main() {
 
 	var timeLocation *time.Location
 	if config.TimeLocation != "" {
-		timeLocation, err = time.LoadLocation("Asia/Tokyo")
+		timeLocation, err = time.LoadLocation(config.TimeLocation)
 		if err != nil {
 			log.Fatal("Load time location error:", err)
 		}
