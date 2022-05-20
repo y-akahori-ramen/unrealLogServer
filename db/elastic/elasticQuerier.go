@@ -132,6 +132,10 @@ func (q *ElasticQuerier) getLog(ctx context.Context, logHandler db.LogHandler, f
 	return logCount, nextSearchAfter, nil
 }
 
+func (q *ElasticQuerier) NewSession(ctx context.Context, filter db.Filter) (db.Session, error) {
+	return NewElasticSession(q, filter), nil
+}
+
 func (q *ElasticQuerier) GetLog(ctx context.Context, logHandler db.LogHandler, filter db.Filter) error {
 	const step = 1000
 	searchAfter := 0

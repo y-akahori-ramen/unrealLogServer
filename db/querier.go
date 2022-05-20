@@ -23,7 +23,13 @@ func (id *LogId) String() string {
 	return fmt.Sprintf("%s_%s_%v", id.Host, id.Platform, id.FileOpenAtUnixMilli)
 }
 
+type Session interface {
+	GetLog(ctx context.Context, logHandler LogHandler) error
+	Close() error
+}
+
 type Querier interface {
+	NewSession(ctx context.Context, filter Filter) (Session, error)
 	GetLog(ctx context.Context, logHandler LogHandler, filter Filter) error
 	GetHosts(ctx context.Context, filter Filter) ([]string, error)
 	GetPlatforms(ctx context.Context, filter Filter) ([]string, error)
