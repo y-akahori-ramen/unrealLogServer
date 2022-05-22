@@ -9,7 +9,6 @@ import (
 	"time"
 
 	ueloghandler "github.com/y-akahori-ramen/ueLogHandler"
-	unreallognotify "github.com/y-akahori-ramen/unrealLogNotify"
 )
 
 type Logger struct {
@@ -20,8 +19,8 @@ func NewLogger() *Logger {
 	return &Logger{w: ueloghandler.NewWatcher()}
 }
 
-func (l *Logger) AddHandler(handler ueloghandler.LogHandler) {
-	l.w.AddHandler(handler)
+func (l *Logger) AddHandler(handler ueloghandler.WatcherLogHandler) {
+	l.w.AddWatcherLogHandler(handler)
 }
 
 func checkFileExist(ctx context.Context, filePath string) error {
@@ -52,8 +51,9 @@ func (l *Logger) Wach(ctx context.Context, filePath string, watchInterval time.D
 			return err
 		}
 
-		err = l.w.Watch(ctx, filePath, watchInterval)
-		if err != unreallognotify.ErrFileRemoved {
+		fileNotifler := ueloghandler.NewFileNotifier(filePath, watchInterval)
+		err = l.w.Watch(ctx, fileNotifler)
+		if err != ueloghandler.ErrFileRemoved {
 			return err
 		}
 	}

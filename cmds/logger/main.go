@@ -56,6 +56,7 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigChan
+		log.Printf("Stopping...")
 		cancel()
 	}()
 

@@ -49,7 +49,7 @@ func (t *Target) Close() {
 func (t *Target) Wach(ctx context.Context, watchInterval time.Duration) error {
 	log.Printf("Start waching. Tag:%s Platform:%s Path:%s", t.config.Tag, t.config.Platform, t.config.Platform)
 
-	t.logger.AddHandler(func(l ueloghandler.Log) error {
+	t.logger.AddHandler(ueloghandler.NewWatcherLogHandler(func(l ueloghandler.WatcherLog) error {
 		err := t.fluentdHandler.HandleLog(l)
 		if err != nil {
 			return err
@@ -58,7 +58,7 @@ func (t *Target) Wach(ctx context.Context, watchInterval time.Duration) error {
 		// Elastic searchのtimesampがログごとに分かれるようにelastic serachのtimestampの最小単位分スリープさせる
 		time.Sleep(time.Millisecond)
 		return nil
-	})
+	}))
 
 	return t.logger.Wach(ctx, t.config.Path, watchInterval)
 }

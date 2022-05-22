@@ -35,7 +35,7 @@ func (h *FluentdLogHandle) Close() error {
 	return h.logger.Close()
 }
 
-func (h *FluentdLogHandle) HandleLog(log ueloghandler.Log) error {
+func (h *FluentdLogHandle) HandleLog(log ueloghandler.WatcherLog) error {
 	fileOpenTime, err := log.ParseFileOpenTime(h.loc)
 	if err != nil {
 		return err
@@ -46,10 +46,10 @@ func (h *FluentdLogHandle) HandleLog(log ueloghandler.Log) error {
 		"Host":                h.hostName,
 		"Platform":            h.platform,
 		"FileOpenAtUnixMilli": fileOpenTime.UnixMilli(),
-		"Frame":               log.Frame,
-		"Log":                 log.Log,
-		"Category":            log.Category,
-		"Verbosity":           log.Verbosity,
+		"Frame":               log.LogData.Frame,
+		"Log":                 log.LogData.Log,
+		"Category":            log.LogData.Category,
+		"Verbosity":           log.LogData.Verbosity,
 		"LogID":               logID.String(),
 	}
 
