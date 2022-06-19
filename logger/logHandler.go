@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/fluent/fluent-logger-golang/fluent"
-	ueloghandler "github.com/y-akahori-ramen/ueLogHandler"
 	"github.com/y-akahori-ramen/unrealLogServer/db"
 )
 
@@ -35,7 +34,7 @@ func (h *FluentdLogHandle) Close() error {
 	return h.logger.Close()
 }
 
-func (h *FluentdLogHandle) HandleLog(log ueloghandler.WatcherLog) error {
+func (h *FluentdLogHandle) HandleLog(log Log) error {
 	fileOpenTime, err := log.ParseFileOpenTime(h.loc)
 	if err != nil {
 		return err

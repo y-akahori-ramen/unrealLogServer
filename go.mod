@@ -6,7 +6,7 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.2.0
 	github.com/fluent/fluent-logger-golang v1.9.0
 	github.com/labstack/echo/v4 v4.7.2
-	github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220522012828-1f2ecd551ff5
+	github.com/y-akahori-ramen/ueLogHandler v0.0.0-20220619024023-ca679f306ec1
 )
 
 require (

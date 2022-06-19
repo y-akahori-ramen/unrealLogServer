@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/fluent/fluent-logger-golang/fluent"
-	ueloghandler "github.com/y-akahori-ramen/ueLogHandler"
 	"github.com/y-akahori-ramen/unrealLogServer/logger"
 )
 
@@ -49,7 +48,7 @@ func (t *Target) Close() {
 func (t *Target) Wach(ctx context.Context, watchInterval time.Duration) error {
 	log.Printf("Start waching. Tag:%s Platform:%s Path:%s", t.config.Tag, t.config.Platform, t.config.Platform)
 
-	t.logger.AddHandler(ueloghandler.NewWatcherLogHandler(func(l ueloghandler.WatcherLog) error {
+	t.logger.AddHandler(logger.NewLogHandler(func(l logger.Log) error {
 		err := t.fluentdHandler.HandleLog(l)
 		if err != nil {
 			return err
